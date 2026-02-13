@@ -14,16 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      batches: {
+        Row: {
+          batch_hash: string
+          batch_id: string
+          blockchain_tx_hash: string | null
+          created_at: string
+          id: string
+          manufacturer_name: string
+          registered_by: string | null
+        }
+        Insert: {
+          batch_hash: string
+          batch_id: string
+          blockchain_tx_hash?: string | null
+          created_at?: string
+          id?: string
+          manufacturer_name: string
+          registered_by?: string | null
+        }
+        Update: {
+          batch_hash?: string
+          batch_id?: string
+          blockchain_tx_hash?: string | null
+          created_at?: string
+          id?: string
+          manufacturer_name?: string
+          registered_by?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          organization: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          organization?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          organization?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scan_logs: {
+        Row: {
+          anomaly_flags: Json | null
+          batch_id: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          scanned_at: string
+          scanner_user_id: string | null
+          verification_status: string
+        }
+        Insert: {
+          anomaly_flags?: Json | null
+          batch_id: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          scanned_at?: string
+          scanner_user_id?: string | null
+          verification_status: string
+        }
+        Update: {
+          anomaly_flags?: Json | null
+          batch_id?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          scanned_at?: string
+          scanner_user_id?: string | null
+          verification_status?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "manufacturer" | "pharmacy" | "regulator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +263,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["manufacturer", "pharmacy", "regulator"],
+    },
   },
 } as const
