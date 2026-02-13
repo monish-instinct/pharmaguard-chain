@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ClipboardList } from 'lucide-react';
 import type { ScanLog } from '@/types';
 
-const statusBadge: Record<string, string> = {
-  authentic: 'bg-success text-success-foreground',
-  suspicious: 'bg-warning text-warning-foreground',
-  not_found: 'bg-destructive text-destructive-foreground',
+const statusBadgeClass: Record<string, string> = {
+  authentic: 'bg-success/10 text-success border-success/20',
+  suspicious: 'bg-warning/10 text-warning border-warning/20',
+  not_found: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
 export default function ScanLogs() {
@@ -28,15 +26,20 @@ export default function ScanLogs() {
   }, [filter]);
 
   return (
-    <div className="container py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <ClipboardList className="h-6 w-6 text-primary" />
-          Scan Logs
-        </h1>
+    <main className="container py-10 animate-fade-in">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <ClipboardList className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Scan Logs</h1>
+            <p className="text-[13px] text-muted-foreground">Verification scan history and anomaly flags</p>
+          </div>
+        </div>
         <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Filter status" />
+          <SelectTrigger className="w-[140px] h-9 rounded-lg text-[13px]">
+            <SelectValue placeholder="Filter" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
@@ -47,52 +50,64 @@ export default function ScanLogs() {
         </Select>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Batch ID</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Anomaly Flags</TableHead>
-                <TableHead>Time</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      <div className="apple-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border/50">
+                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch ID</th>
+                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Anomalies</th>
+                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Time</th>
+              </tr>
+            </thead>
+            <tbody>
               {logs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">No scan logs</TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan={5} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+                        <ClipboardList className="h-6 w-6 text-muted-foreground/50" />
+                      </div>
+                      <p className="text-[14px] text-muted-foreground font-medium">No scan logs found</p>
+                    </div>
+                  </td>
+                </tr>
               ) : (
                 logs.map((log) => (
-                  <TableRow key={log.id} className={log.verification_status === 'suspicious' ? 'bg-warning/5' : ''}>
-                    <TableCell className="font-mono">{log.batch_id}</TableCell>
-                    <TableCell>
-                      <Badge className={statusBadge[log.verification_status]}>
-                        {log.verification_status}
+                  <tr
+                    key={log.id}
+                    className={`border-b border-border/30 last:border-0 transition-colors hover:bg-muted/30 ${
+                      log.verification_status === 'suspicious' ? 'bg-warning/[0.02]' : ''
+                    }`}
+                  >
+                    <td className="px-6 py-3.5 text-[13px] font-mono font-medium text-foreground">{log.batch_id}</td>
+                    <td className="px-6 py-3.5">
+                      <Badge variant="outline" className={`text-[11px] font-medium capitalize rounded-full px-2.5 py-0.5 ${statusBadgeClass[log.verification_status]}`}>
+                        {log.verification_status.replace('_', ' ')}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    </td>
+                    <td className="px-6 py-3.5 text-[13px] text-muted-foreground">
                       {log.latitude && log.longitude
                         ? `${log.latitude.toFixed(2)}, ${log.longitude.toFixed(2)}`
                         : 'Unknown'}
-                    </TableCell>
-                    <TableCell className="text-xs max-w-[200px]">
+                    </td>
+                    <td className="px-6 py-3.5 text-[12px] text-muted-foreground max-w-[200px] truncate">
                       {log.anomaly_flags && (log.anomaly_flags as string[]).length > 0
                         ? (log.anomaly_flags as string[]).join('; ')
-                        : '—'}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                        : '--'}
+                    </td>
+                    <td className="px-6 py-3.5 text-[13px] text-muted-foreground">
                       {new Date(log.scanned_at).toLocaleString()}
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
   );
 }

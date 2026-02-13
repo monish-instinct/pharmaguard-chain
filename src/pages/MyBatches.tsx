@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Package, ExternalLink } from 'lucide-react';
+import { Package, ExternalLink, Boxes } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { Batch } from '@/types';
 
@@ -34,61 +31,74 @@ export default function MyBatches() {
   }, [user, activeRole]);
 
   return (
-    <div className="container py-8">
-      <h1 className="text-2xl font-bold flex items-center gap-2 mb-6">
-        <Package className="h-6 w-6 text-primary" />
-        {activeRole === 'regulator' ? 'All Batches' : 'My Batches'}
-      </h1>
+    <main className="container py-10 animate-fade-in">
+      <div className="mb-8 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+          <Boxes className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            {activeRole === 'regulator' ? 'All Batches' : 'My Batches'}
+          </h1>
+          <p className="text-[13px] text-muted-foreground">
+            {activeRole === 'regulator' ? 'Every registered batch in the system' : 'Your registered drug batches'}
+          </p>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>QR</TableHead>
-                <TableHead>Batch ID</TableHead>
-                <TableHead>Manufacturer</TableHead>
-                <TableHead>Blockchain</TableHead>
-                <TableHead>Registered</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {batches.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No batches registered yet
-                  </TableCell>
-                </TableRow>
-              ) : (
-                batches.map((batch) => (
-                  <TableRow key={batch.id}>
-                    <TableCell>
+      {batches.length === 0 ? (
+        <div className="apple-card flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted mb-4">
+            <Package className="h-7 w-7 text-muted-foreground/50" />
+          </div>
+          <p className="text-[15px] font-medium text-muted-foreground">No batches registered yet</p>
+          <p className="text-[13px] text-muted-foreground/70 mt-1">Batches will appear here once registered</p>
+        </div>
+      ) : (
+        <div className="apple-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border/50">
+                  <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">QR</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch ID</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Manufacturer</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Storage</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Registered</th>
+                </tr>
+              </thead>
+              <tbody>
+                {batches.map((batch) => (
+                  <tr key={batch.id} className="border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors">
+                    <td className="px-6 py-3">
                       {qrUrls[batch.batch_id] && (
-                        <img src={qrUrls[batch.batch_id]} alt="QR" className="h-10 w-10 rounded" />
+                        <img src={qrUrls[batch.batch_id]} alt={`QR for ${batch.batch_id}`} className="h-10 w-10 rounded-lg" />
                       )}
-                    </TableCell>
-                    <TableCell className="font-mono font-medium">{batch.batch_id}</TableCell>
-                    <TableCell>{batch.manufacturer_name}</TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="px-6 py-3 text-[13px] font-mono font-medium text-foreground">{batch.batch_id}</td>
+                    <td className="px-6 py-3 text-[13px] text-foreground">{batch.manufacturer_name}</td>
+                    <td className="px-6 py-3">
                       {batch.blockchain_tx_hash ? (
-                        <Badge variant="outline" className="gap-1">
-                          <ExternalLink className="h-3 w-3" />
+                        <Badge variant="outline" className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-primary/8 text-primary border-primary/20">
+                          <ExternalLink className="h-3 w-3 mr-1" />
                           On-chain
                         </Badge>
                       ) : (
-                        <Badge variant="secondary">Off-chain</Badge>
+                        <Badge variant="outline" className="text-[11px] font-medium rounded-full px-2.5 py-0.5">
+                          Off-chain
+                        </Badge>
                       )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
+                    </td>
+                    <td className="px-6 py-3 text-[13px] text-muted-foreground">
                       {new Date(batch.created_at).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }

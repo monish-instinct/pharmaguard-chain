@@ -1,23 +1,35 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { LayoutDashboard, Package, ScanLine, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Package, ScanLine, AlertTriangle, ShieldCheck } from 'lucide-react';
 import type { ScanLog } from '@/types';
 
 const STATUS_COLORS: Record<string, string> = {
   authentic: 'hsl(142, 71%, 45%)',
   suspicious: 'hsl(38, 92%, 50%)',
-  not_found: 'hsl(0, 84%, 60%)',
+  not_found: 'hsl(0, 72%, 51%)',
 };
 
-const statusBadge: Record<string, string> = {
-  authentic: 'bg-success text-success-foreground',
-  suspicious: 'bg-warning text-warning-foreground',
-  not_found: 'bg-destructive text-destructive-foreground',
+const statusBadgeClass: Record<string, string> = {
+  authentic: 'bg-success/10 text-success border-success/20',
+  suspicious: 'bg-warning/10 text-warning border-warning/20',
+  not_found: 'bg-destructive/10 text-destructive border-destructive/20',
 };
+
+function StatCard({ label, value, icon: Icon, accent }: { label: string; value: string | number; icon: React.ElementType; accent: string }) {
+  return (
+    <div className="apple-card p-5 flex items-center gap-4">
+      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${accent}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-[13px] text-muted-foreground font-medium">{label}</p>
+        <p className="text-2xl font-bold tracking-tight text-foreground mt-0.5">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const [totalBatches, setTotalBatches] = useState(0);
@@ -62,107 +74,118 @@ export default function Dashboard() {
     : 100;
 
   return (
-    <div className="container py-8">
-      <h1 className="text-2xl font-bold flex items-center gap-2 mb-6">
-        <LayoutDashboard className="h-6 w-6 text-primary" />
-        Regulator Dashboard
-      </h1>
+    <main className="container py-10 animate-fade-in">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
+        <p className="text-[15px] text-muted-foreground mt-1">Real-time analytics and supply chain overview</p>
+      </div>
 
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
-        {[
-          { label: 'Total Batches', value: totalBatches, icon: Package, color: 'text-primary' },
-          { label: 'Total Scans', value: totalScans, icon: ScanLine, color: 'text-primary' },
-          { label: 'Suspicious', value: suspiciousCount, icon: AlertTriangle, color: 'text-warning' },
-          { label: 'Authentic Rate', value: `${authenticRate}%`, icon: ShieldCheck, color: 'text-success' },
-        ].map((card) => (
-          <Card key={card.label}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
-                  <p className="text-3xl font-bold">{card.value}</p>
-                </div>
-                <card.icon className={`h-8 w-8 ${card.color}`} />
+      {/* Stats Grid */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-8">
+        <StatCard label="Total Batches" value={totalBatches} icon={Package} accent="bg-primary/10 text-primary" />
+        <StatCard label="Total Scans" value={totalScans} icon={ScanLine} accent="bg-primary/10 text-primary" />
+        <StatCard label="Suspicious" value={suspiciousCount} icon={AlertTriangle} accent="bg-warning/10 text-warning" />
+        <StatCard label="Authentic Rate" value={`${authenticRate}%`} icon={ShieldCheck} accent="bg-success/10 text-success" />
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-4 md:grid-cols-2 mb-8">
+        <div className="apple-card p-6">
+          <h2 className="text-[15px] font-semibold text-foreground mb-5">Scan Activity</h2>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={dailyScans}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 90%)" />
+              <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis fontSize={11} tickLine={false} axisLine={false} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: '12px',
+                  border: '1px solid hsl(0, 0%, 90%)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  fontSize: '13px',
+                }}
+              />
+              <Bar dataKey="count" fill="hsl(211, 100%, 50%)" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="apple-card p-6">
+          <h2 className="text-[15px] font-semibold text-foreground mb-5">Verification Breakdown</h2>
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart>
+              <Pie data={statusBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={48} strokeWidth={2} stroke="hsl(0, 0%, 100%)">
+                {statusBreakdown.map((entry) => (
+                  <Cell key={entry.name} fill={STATUS_COLORS[entry.name]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  borderRadius: '12px',
+                  border: '1px solid hsl(0, 0%, 90%)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  fontSize: '13px',
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="flex justify-center gap-5 mt-4">
+            {statusBreakdown.map((entry) => (
+              <div key={entry.name} className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COLORS[entry.name] }} />
+                <span className="text-[12px] text-muted-foreground capitalize">{entry.name.replace('_', ' ')}</span>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 mb-8">
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Scan Activity</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={dailyScans}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" fontSize={12} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(221, 83%, 53%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Verification Breakdown</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={statusBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                  {statusBreakdown.map((entry) => (
-                    <Cell key={entry.name} fill={STATUS_COLORS[entry.name]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader><CardTitle className="text-lg">Recent Scan Activity</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Batch ID</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Time</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      {/* Recent Scans */}
+      <div className="apple-card overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/50">
+          <h2 className="text-[15px] font-semibold text-foreground">Recent Scan Activity</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border/50">
+                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch ID</th>
+                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Time</th>
+              </tr>
+            </thead>
+            <tbody>
               {recentScans.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">No scans yet</TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-[14px] text-muted-foreground">
+                    No scans recorded yet
+                  </td>
+                </tr>
               ) : (
                 recentScans.map((scan) => (
-                  <TableRow key={scan.id}>
-                    <TableCell className="font-mono">{scan.batch_id}</TableCell>
-                    <TableCell>
-                      <Badge className={statusBadge[scan.verification_status]}>
-                        {scan.verification_status}
+                  <tr key={scan.id} className="border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors">
+                    <td className="px-6 py-3.5 text-[13px] font-mono font-medium text-foreground">{scan.batch_id}</td>
+                    <td className="px-6 py-3.5">
+                      <Badge variant="outline" className={`text-[11px] font-medium capitalize rounded-full px-2.5 py-0.5 ${statusBadgeClass[scan.verification_status]}`}>
+                        {scan.verification_status.replace('_', ' ')}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    </td>
+                    <td className="px-6 py-3.5 text-[13px] text-muted-foreground">
                       {scan.latitude && scan.longitude
                         ? `${scan.latitude.toFixed(2)}, ${scan.longitude.toFixed(2)}`
                         : 'Unknown'}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    </td>
+                    <td className="px-6 py-3.5 text-[13px] text-muted-foreground">
                       {new Date(scan.scanned_at).toLocaleString()}
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
   );
 }
