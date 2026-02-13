@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { generateBatchHash, registerBatchOnChain, isBlockchainConfigured } from '@/lib/blockchain';
+import { registerBatchInSupabase, updateBatchBlockchainHash } from '@/integrations/supabase/services';
 import QRCode from 'qrcode';
-import { Package, Download } from 'lucide-react';
+import { Package, Download, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function RegisterBatch() {
   const { user, demoMode } = useAuth();
@@ -17,31 +17,56 @@ export default function RegisterBatch() {
   const [loading, setLoading] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [lastBatchId, setLastBatchId] = useState('');
+  const [registrationDetails, setRegistrationDetails] = useState<{
+    blockchainTx?: string;
+    supabaseId?: string;
+    timestamp?: string;
+  } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setRegistrationDetails(null);
 
     try {
       const batchHash = await generateBatchHash(batchId, manufacturer);
       let txHash: string | null = null;
+      let blockchainSuccess = false;
 
+      // Step 1: Try blockchain registration if configured
       if (isBlockchainConfigured()) {
-        txHash = await registerBatchOnChain(batchId, manufacturer, batchHash);
-        if (!txHash) toast.info('Blockchain unavailable, using Supabase fallback');
+        try {
+          txHash = await registerBatchOnChain(batchId, manufacturer, batchHash);
+          if (txHash) {
+            blockchainSuccess = true;
+            toast.success('Batch registered on Polygon blockchain!');
+          } else {
+            toast.info('Blockchain registration unavailable, using Supabase fallback');
+          }
+        } catch (err) {
+          console.error('[v0] Blockchain registration failed:', err);
+          toast.info('Blockchain unavailable, using Supabase fallback');
+        }
       }
 
+      // Step 2: Register in Supabase
       if (!demoMode && user) {
-        const { error } = await supabase.from('batches').insert({
-          batch_id: batchId,
-          manufacturer_name: manufacturer,
-          batch_hash: batchHash,
-          blockchain_tx_hash: txHash,
-          registered_by: user.id,
+        const batch = await registerBatchInSupabase(batchId, manufacturer, user.id);
+        if (!batch) throw new Error('Failed to register batch in Supabase');
+
+        // Step 3: Update blockchain hash if registration succeeded
+        if (txHash && blockchainSuccess) {
+          await updateBatchBlockchainHash(batchId, txHash);
+        }
+
+        setRegistrationDetails({
+          supabaseId: batch.id,
+          blockchainTx: txHash || undefined,
+          timestamp: new Date().toISOString(),
         });
-        if (error) throw error;
       }
 
+      // Step 4: Generate QR code
       const qr = await QRCode.toDataURL(batchId, { width: 300, margin: 2 });
       setQrDataUrl(qr);
       setLastBatchId(batchId);
@@ -49,6 +74,7 @@ export default function RegisterBatch() {
       setBatchId('');
       setManufacturer('');
     } catch (err: any) {
+      console.error('[v0] Registration error:', err);
       toast.error(err.message || 'Registration failed');
     } finally {
       setLoading(false);
@@ -112,6 +138,27 @@ export default function RegisterBatch() {
                 <Download className="h-4 w-4 mr-2" />
                 Download PNG
               </Button>
+              
+              {registrationDetails && (
+                <div className="w-full mt-4 pt-4 border-t space-y-2">
+                  <h3 className="font-semibold text-sm flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    Registration Details
+                  </h3>
+                  {registrationDetails.blockchainTx && (
+                    <div className="text-xs p-2 bg-blue-50 rounded border border-blue-200 font-mono">
+                      <p className="font-semibold text-blue-900 mb-1">Blockchain TX:</p>
+                      <p className="break-all text-blue-800">{registrationDetails.blockchainTx}</p>
+                    </div>
+                  )}
+                  {!registrationDetails.blockchainTx && (
+                    <div className="text-xs p-2 bg-amber-50 rounded border border-amber-200 flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-amber-700 flex-shrink-0 mt-0.5" />
+                      <p className="text-amber-800">Registered in Supabase only (blockchain not configured)</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

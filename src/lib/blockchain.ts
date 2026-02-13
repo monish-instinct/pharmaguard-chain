@@ -31,19 +31,40 @@ export const registerBatchOnChain = async (
   batchHash: string
 ): Promise<string | null> => {
   const addr = getContractAddress();
-  if (!addr) return null;
+  if (!addr) {
+    console.warn('[v0] No contract address configured');
+    return null;
+  }
 
   const provider = getProvider();
-  if (!provider) return null;
+  if (!provider) {
+    console.warn('[v0] MetaMask not available');
+    return null;
+  }
 
   try {
     const signer = await provider.getSigner();
     const contract = new ethers.Contract(addr, CONTRACT_ABI, signer);
+    
+    console.log('[v0] Registering batch on blockchain:', { batchId, manufacturerName });
+    
     const tx = await contract.registerBatch(batchId, manufacturerName, batchHash);
-    await tx.wait();
+    console.log('[v0] Transaction sent:', tx.hash);
+    
+    const receipt = await tx.wait();
+    console.log('[v0] Transaction confirmed:', receipt?.hash);
+    
     return tx.hash;
-  } catch (e) {
-    console.error('Blockchain registration failed:', e);
+  } catch (error: any) {
+    if (error.code === 'ACTION_REJECTED') {
+      console.warn('[v0] User rejected transaction');
+    } else if (error.code === 'INSUFFICIENT_FUNDS') {
+      console.error('[v0] Insufficient gas/MATIC balance');
+    } else if (error.reason) {
+      console.error('[v0] Blockchain error:', error.reason);
+    } else {
+      console.error('[v0] Blockchain registration failed:', error);
+    }
     return null;
   }
 };
@@ -52,21 +73,39 @@ export const verifyBatchOnChain = async (
   batchId: string
 ): Promise<{ exists: boolean; manufacturerName?: string; batchHash?: string } | null> => {
   const addr = getContractAddress();
-  if (!addr) return null;
+  if (!addr) {
+    console.warn('[v0] No contract address configured for verification');
+    return null;
+  }
 
   const provider = getProvider();
-  if (!provider) return null;
+  if (!provider) {
+    console.warn('[v0] Web3 provider not available for verification');
+    return null;
+  }
 
   try {
+    console.log('[v0] Verifying batch on blockchain:', batchId);
+    
     const contract = new ethers.Contract(addr, CONTRACT_ABI, provider);
     const result = await contract.verifyBatch(batchId);
+    
+    console.log('[v0] Blockchain verification result:', { exists: result[3] });
+    
     return {
       exists: result[3],
       manufacturerName: result[0],
       batchHash: result[1],
     };
-  } catch (e) {
-    console.error('Blockchain verification failed:', e);
+  } catch (error: any) {
+    if (error.code === 'CALL_EXCEPTION') {
+      console.warn('[v0] Batch not found on blockchain');
+      return { exists: false };
+    } else if (error.code === 'NETWORK_ERROR') {
+      console.error('[v0] Network error during blockchain verification');
+    } else {
+      console.error('[v0] Blockchain verification error:', error.message);
+    }
     return null;
   }
 };
