@@ -29,7 +29,7 @@ export default function ScanLogs() {
     <main className="container py-10 animate-fade-in">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 glow-primary">
             <ClipboardList className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -38,7 +38,7 @@ export default function ScanLogs() {
           </div>
         </div>
         <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-[140px] h-9 rounded-lg text-[13px]">
+          <SelectTrigger className="w-[140px] h-9 rounded-lg text-[13px] bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-foreground">
             <SelectValue placeholder="Filter" />
           </SelectTrigger>
           <SelectContent>
@@ -54,7 +54,7 @@ export default function ScanLogs() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border/50">
+              <tr className="border-b border-[rgba(255,255,255,0.06)]">
                 <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch ID</th>
                 <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Location</th>
@@ -67,8 +67,8 @@ export default function ScanLogs() {
                 <tr>
                   <td colSpan={5} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-                        <ClipboardList className="h-6 w-6 text-muted-foreground/50" />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(255,255,255,0.04)]">
+                        <ClipboardList className="h-6 w-6 text-muted-foreground/40" />
                       </div>
                       <p className="text-[14px] text-muted-foreground font-medium">No scan logs found</p>
                     </div>
@@ -78,7 +78,7 @@ export default function ScanLogs() {
                 logs.map((log) => (
                   <tr
                     key={log.id}
-                    className={`border-b border-border/30 last:border-0 transition-colors hover:bg-muted/30 ${
+                    className={`border-b border-[rgba(255,255,255,0.04)] last:border-0 transition-colors hover:bg-[rgba(255,255,255,0.02)] ${
                       log.verification_status === 'suspicious' ? 'bg-warning/[0.02]' : ''
                     }`}
                   >

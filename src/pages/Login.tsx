@@ -28,7 +28,6 @@ export default function Login() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
             data: { display_name: displayName },
           },
         });
@@ -36,7 +35,25 @@ export default function Login() {
 
         if (data.user) {
           await supabase.from('user_roles').insert({ user_id: data.user.id, role });
-          toast.success('Account created! Check your email to verify.');
+
+          if (data.session) {
+            toast.success('Account created! You are now signed in.');
+            navigate('/');
+            return;
+          }
+
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (!signInError) {
+            toast.success('Account created! You are now signed in.');
+            navigate('/');
+          } else {
+            toast.success('Account created! Please sign in below.');
+            setIsSignUp(false);
+          }
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -52,11 +69,14 @@ export default function Login() {
   };
 
   return (
-    <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4">
-      <div className="w-full max-w-sm animate-scale-in">
+    <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4 relative">
+      {/* Ambient glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+      
+      <div className="w-full max-w-sm animate-scale-in relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary apple-shadow">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary glow-primary">
             <Shield className="h-7 w-7 text-primary-foreground" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
@@ -72,46 +92,47 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {isSignUp && (
               <div className="flex flex-col gap-2">
-                <Label htmlFor="name" className="text-[13px] font-medium">Display Name</Label>
+                <Label htmlFor="name" className="text-[13px] font-medium text-foreground">Display Name</Label>
                 <Input
                   id="name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
-                  className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px] placeholder:text-muted-foreground/60"
+                  className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:ring-primary/20"
                   placeholder="Your name"
                 />
               </div>
             )}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="email" className="text-[13px] font-medium">Email</Label>
+              <Label htmlFor="email" className="text-[13px] font-medium text-foreground">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px] placeholder:text-muted-foreground/60"
+                className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:ring-primary/20"
                 placeholder="you@example.com"
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password" className="text-[13px] font-medium">Password</Label>
+              <Label htmlFor="password" className="text-[13px] font-medium text-foreground">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px] placeholder:text-muted-foreground/60"
-                placeholder="Enter password"
+                minLength={6}
+                className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:ring-primary/20"
+                placeholder="Min. 6 characters"
               />
             </div>
             {isSignUp && (
               <div className="flex flex-col gap-2">
-                <Label className="text-[13px] font-medium">Role</Label>
+                <Label className="text-[13px] font-medium text-foreground">Role</Label>
                 <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-                  <SelectTrigger className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px]">
+                  <SelectTrigger className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -125,7 +146,7 @@ export default function Login() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-xl text-[14px] font-medium mt-1"
+              className="w-full h-11 rounded-xl text-[14px] font-medium mt-1 glow-primary"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

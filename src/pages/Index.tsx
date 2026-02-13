@@ -5,8 +5,8 @@ import { Shield, Package, ScanLine, LayoutDashboard, ArrowRight, Blocks, Lock, E
 
 function FeatureCard({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
   return (
-    <div className="apple-card p-6 flex flex-col gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/8">
+    <div className="apple-card p-6 flex flex-col gap-3 group hover:border-[rgba(255,255,255,0.1)] transition-all duration-300">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 glow-primary transition-all duration-300 group-hover:bg-primary/15">
         <Icon className="h-5 w-5 text-primary" />
       </div>
       <h3 className="text-[15px] font-semibold text-foreground">{title}</h3>
@@ -19,7 +19,7 @@ function RoleCard({ icon: Icon, title, description, path }: { icon: React.Elemen
   return (
     <Link to={path}>
       <div className="apple-card-interactive p-5 flex items-center gap-4 h-full">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/8">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <Icon className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
@@ -39,9 +39,12 @@ export default function Index() {
     return (
       <main className="min-h-[calc(100vh-3.5rem)]">
         {/* Hero */}
-        <section className="flex flex-col items-center justify-center px-4 pt-20 pb-16 text-center">
-          <div className="animate-fade-in">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary apple-shadow-lg">
+        <section className="flex flex-col items-center justify-center px-4 pt-24 pb-20 text-center relative">
+          {/* Ambient glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+          
+          <div className="animate-fade-in relative z-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary glow-primary">
               <Shield className="h-8 w-8 text-primary-foreground" />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground text-balance">
@@ -52,13 +55,13 @@ export default function Index() {
             </p>
             <div className="flex gap-3 justify-center mt-8">
               <Link to="/login">
-                <Button size="lg" className="rounded-full px-7 h-12 text-[15px] font-medium">
+                <Button size="lg" className="rounded-full px-7 h-12 text-[15px] font-medium glow-primary">
                   Get Started
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </Link>
               <Link to="/settings">
-                <Button size="lg" variant="outline" className="rounded-full px-7 h-12 text-[15px] font-medium border-border/60">
+                <Button size="lg" variant="outline" className="rounded-full px-7 h-12 text-[15px] font-medium border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] text-foreground">
                   Try Demo
                 </Button>
               </Link>
@@ -67,7 +70,7 @@ export default function Index() {
         </section>
 
         {/* Features */}
-        <section className="container pb-20">
+        <section className="container pb-24">
           <div className="grid gap-4 md:grid-cols-3">
             <FeatureCard
               icon={Blocks}

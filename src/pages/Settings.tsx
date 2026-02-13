@@ -22,7 +22,7 @@ export default function Settings() {
   return (
     <main className="container max-w-xl py-10 animate-fade-in">
       <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 glow-primary">
           <Settings2 className="h-5 w-5 text-primary" />
         </div>
         <div>
@@ -35,7 +35,7 @@ export default function Settings() {
         {/* Demo Mode */}
         <div className="apple-card p-6">
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning/10 glow-warning">
               <FlaskConical className="h-5 w-5 text-warning" />
             </div>
             <div className="flex-1 min-w-0">
@@ -56,7 +56,7 @@ export default function Settings() {
         {/* Smart Contract */}
         <div className="apple-card p-6">
           <div className="flex items-start gap-4 mb-5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 glow-primary">
               <LinkIcon className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -69,13 +69,13 @@ export default function Settings() {
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="contract" className="text-[13px] font-medium">Contract Address</Label>
+              <Label htmlFor="contract" className="text-[13px] font-medium text-foreground">Contract Address</Label>
               <Input
                 id="contract"
                 placeholder="0x..."
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="h-11 rounded-xl bg-secondary/50 border-border/50 font-mono text-[13px]"
+                className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] font-mono text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40"
               />
             </div>
             <div className="flex items-center justify-between">
