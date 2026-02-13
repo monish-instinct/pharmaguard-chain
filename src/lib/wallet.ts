@@ -1,24 +1,22 @@
 import { ethers } from 'ethers';
 
-export type WalletType = 'metamask' | 'phantom';
-
 export const isMetaMaskAvailable = (): boolean => {
   return typeof window !== 'undefined' && !!(window as any).ethereum?.isMetaMask;
 };
 
-export const isPhantomAvailable = (): boolean => {
-  return typeof window !== 'undefined' && !!(window as any).phantom?.ethereum;
-};
-
-export const getProvider = (wallet: WalletType): any | null => {
-  if (wallet === 'phantom') {
-    return (window as any).phantom?.ethereum ?? null;
+export const getProvider = (): any | null => {
+  // Explicitly use MetaMask's provider, skip Phantom even if installed
+  const ethereum = (window as any).ethereum;
+  if (!ethereum) return null;
+  // If multiple providers exist (e.g. Phantom injects too), find MetaMask
+  if (ethereum.providers?.length) {
+    return ethereum.providers.find((p: any) => p.isMetaMask) ?? null;
   }
-  return (window as any).ethereum ?? null;
+  return ethereum.isMetaMask ? ethereum : null;
 };
 
-export const connectWallet = async (wallet: WalletType): Promise<string | null> => {
-  const provider = getProvider(wallet);
+export const connectWallet = async (): Promise<string | null> => {
+  const provider = getProvider();
   if (!provider) return null;
 
   try {
@@ -29,8 +27,8 @@ export const connectWallet = async (wallet: WalletType): Promise<string | null> 
   }
 };
 
-export const signMessage = async (wallet: WalletType, message: string): Promise<string | null> => {
-  const provider = getProvider(wallet);
+export const signMessage = async (message: string): Promise<string | null> => {
+  const provider = getProvider();
   if (!provider) return null;
 
   try {
