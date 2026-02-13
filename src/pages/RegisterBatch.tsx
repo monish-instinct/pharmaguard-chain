@@ -44,7 +44,7 @@ export default function RegisterBatch() {
       const qr = await QRCode.toDataURL(batchId, {
         width: 300,
         margin: 2,
-        color: { dark: '#ffffffee', light: '#00000000' },
+        color: { dark: '#1a1a1a', light: '#ffffff00' },
       });
       setQrDataUrl(qr);
       setLastBatchId(batchId);
@@ -81,7 +81,6 @@ export default function RegisterBatch() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Form */}
         <div className="apple-card p-6">
           <h2 className="text-[15px] font-semibold text-foreground mb-5">Batch Details</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -93,7 +92,7 @@ export default function RegisterBatch() {
                 value={batchId}
                 onChange={(e) => setBatchId(e.target.value)}
                 required
-                className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40"
+                className="h-11 rounded-xl text-[14px]"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -104,7 +103,7 @@ export default function RegisterBatch() {
                 value={manufacturer}
                 onChange={(e) => setManufacturer(e.target.value)}
                 required
-                className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40"
+                className="h-11 rounded-xl text-[14px]"
               />
             </div>
             <Button type="submit" className="w-full h-11 rounded-xl text-[14px] font-medium mt-1 glow-primary" disabled={loading}>
@@ -112,31 +111,30 @@ export default function RegisterBatch() {
             </Button>
             {!isBlockchainConfigured() && (
               <p className="text-[11px] text-muted-foreground text-center">
-                No blockchain configured -- data stored in Supabase
+                No blockchain configured — data stored in Supabase
               </p>
             )}
           </form>
         </div>
 
-        {/* QR Result */}
         {qrDataUrl ? (
-          <div className="apple-card p-6 flex flex-col items-center gap-4 animate-scale-in glow-success">
+          <div className="apple-card p-6 flex flex-col items-center gap-4 animate-scale-in border-success/20 glow-success">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
               <CheckCircle className="h-5 w-5 text-success" />
             </div>
             <h2 className="text-[15px] font-semibold text-foreground">QR Code Ready</h2>
-            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] overflow-hidden bg-[rgba(255,255,255,0.04)] p-4">
+            <div className="rounded-2xl border border-border overflow-hidden bg-card p-4">
               <img src={qrDataUrl} alt={`QR code for batch ${lastBatchId}`} className="rounded-lg" />
             </div>
             <p className="text-[13px] font-mono font-medium text-muted-foreground">{lastBatchId}</p>
-            <Button variant="outline" onClick={downloadQR} className="rounded-xl h-10 px-5 text-[13px] border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] text-foreground">
+            <Button variant="outline" onClick={downloadQR} className="rounded-xl h-10 px-5 text-[13px] border-border hover:bg-accent text-foreground">
               <Download className="h-4 w-4 mr-2" />
               Download PNG
             </Button>
           </div>
         ) : (
           <div className="apple-card p-6 flex flex-col items-center justify-center text-center min-h-[280px]">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(255,255,255,0.04)] mb-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent mb-3">
               <Package className="h-6 w-6 text-muted-foreground/40" />
             </div>
             <p className="text-[14px] text-muted-foreground font-medium">No QR code yet</p>
