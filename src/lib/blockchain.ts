@@ -98,9 +98,16 @@ export const registerBatchOnChain = async (
     const tx = await contract.registerBatch(batchId, ipfsHash);
     await tx.wait();
     return tx.hash;
-  } catch (e) {
+  } catch (e: any) {
     console.error('Blockchain registration failed:', e);
-    return null;
+    const msg = e?.error?.message || e?.message || '';
+    if (msg.includes('RPC endpoint returned too many errors') || e?.error?.code === -32002) {
+      throw new Error('RPC rate limited. Open MetaMask → Settings → Networks → Sepolia and switch RPC to https://ethereum-sepolia-rpc.publicnode.com, then retry.');
+    }
+    if (e?.code === 'ACTION_REJECTED' || e?.code === 4001) {
+      throw new Error('Transaction rejected by user.');
+    }
+    throw new Error(msg || 'Blockchain transaction failed.');
   }
 };
 

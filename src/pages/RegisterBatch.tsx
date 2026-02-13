@@ -65,9 +65,16 @@ export default function RegisterBatch() {
 
       // Step 2: Register on blockchain — MetaMask will prompt for approval
       setStatus('Waiting for MetaMask approval...');
-      const txHash = await registerBatchOnChain(batchId, ipfsHash);
+      let txHash: string | null = null;
+      try {
+        txHash = await registerBatchOnChain(batchId, ipfsHash);
+      } catch (err: any) {
+        toast.error(err.message || 'Blockchain transaction failed.');
+        setLoading(false);
+        return;
+      }
       if (!txHash) {
-        toast.error('Blockchain transaction failed or was rejected. Batch not registered.');
+        toast.error('Blockchain transaction failed. Batch not registered.');
         setLoading(false);
         return;
       }
