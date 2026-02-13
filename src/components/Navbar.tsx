@@ -93,171 +93,193 @@ export function Navbar() {
     else { toast.error('Failed to switch network'); }
   };
 
-  // Hide navbar on consumer-facing pages for cleaner experience
   if (isConsumerPage && !activeRole) return null;
 
   return (
-    <header className={`sticky top-0 z-50 border-b transition-all duration-300 ${isLanding ? 'bg-background/80 backdrop-blur-xl border-transparent' : 'glass border-border'}`}>
-      <div className="container flex h-14 items-center gap-4">
-        <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary transition-transform duration-300 group-hover:scale-105">
-            <Shield className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-semibold text-[15px] tracking-tight text-foreground">PharmaShield</span>
-        </Link>
-
-        {isLanding && (
-          <nav className="hidden md:flex items-center gap-1 ml-6">
-            {[
-              { label: 'About', href: '#technology' },
-              { label: 'Technology', href: '#technology' },
-              { label: 'Consumer', to: '/consumer' },
-              { label: 'Dashboard', to: '/login' },
-            ].map((item) =>
-              'to' in item ? (
-                <Link key={item.label} to={item.to!}>
-                  <button className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">
-                    {item.label}
-                  </button>
-                </Link>
-              ) : (
-                <a key={item.label} href={item.href}>
-                  <button className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">
-                    {item.label}
-                  </button>
-                </a>
-              )
-            )}
-          </nav>
-        )}
-
-        {!isLanding && (
-          <nav className="hidden md:flex items-center gap-0.5 ml-6">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <Link key={item.path} to={item.path}>
-                  <button className={`px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors duration-200 relative ${
-                    isActive ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
-                  }`}>
-                    {item.label}
-                    {item.label === 'Alerts' && alertCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
-                        {alertCount > 9 ? '9+' : alertCount}
-                      </span>
-                    )}
-                  </button>
-                </Link>
-              );
-            })}
-          </nav>
-        )}
-
-        <div className="ml-auto flex items-center gap-2">
-          {user && (
-            <Link to="/search" className="hidden md:inline-flex">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent">
-                <Search className="h-4 w-4" />
-              </Button>
-            </Link>
-          )}
-
-          {walletAddress && onSepolia !== null && isBlockchainConfigured() && (
-            onSepolia ? (
-              <Badge variant="secondary" className="hidden md:inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/10 text-success border-success/20 gap-1">
-                <Wifi className="h-3 w-3" /> Sepolia
-              </Badge>
-            ) : (
-              <Button variant="outline" size="sm" onClick={handleSwitchNetwork}
-                className="hidden md:inline-flex h-6 px-2 text-[10px] rounded-full border-warning/30 text-warning hover:bg-warning/10">
-                <Wifi className="h-3 w-3 mr-1" /> Switch to Sepolia
-              </Button>
-            )
-          )}
-
-          {demoMode && (
-            <div className="hidden md:flex items-center gap-2 rounded-full border border-warning/20 bg-warning/5 px-3 py-1">
-              <FlaskConical className="h-3.5 w-3.5 text-warning" />
-              <Select value={demoRole} onValueChange={(v) => setDemoRole(v as AppRole)}>
-                <SelectTrigger className="h-6 w-[110px] text-xs border-0 bg-transparent p-0 shadow-none focus:ring-0 text-warning">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manufacturer">Manufacturer</SelectItem>
-                  <SelectItem value="distributor">Distributor</SelectItem>
-                  <SelectItem value="pharmacy">Pharmacy</SelectItem>
-                  <SelectItem value="consumer">Consumer</SelectItem>
-                  <SelectItem value="regulator">Regulator</SelectItem>
-                  <SelectItem value="auditor">Auditor</SelectItem>
-                </SelectContent>
-              </Select>
+    <header className="sticky top-0 z-50 w-full">
+      {/* macOS-style floating bar */}
+      <div className={`mx-auto transition-all duration-300 ${
+        isLanding
+          ? 'bg-background/60 backdrop-blur-2xl border-b border-transparent'
+          : 'bg-card/70 backdrop-blur-2xl border-b border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.04)]'
+      }`}>
+        <div className="container flex h-12 items-center gap-3">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 shrink-0 group">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary transition-transform duration-200 group-hover:scale-105">
+              <Shield className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
-          )}
-
-          {walletAddress && (
-            <Badge variant="secondary" className="hidden md:inline-flex text-[11px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border-border">
-              <Wallet className="h-3 w-3 mr-1.5" />
-              {shortenAddress(walletAddress)}
-            </Badge>
-          )}
-
-          {activeRole && (
-            <Badge variant="secondary" className="hidden md:inline-flex text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border-border">
-              {roleLabels[activeRole]}
-            </Badge>
-          )}
-
-          {alertCount > 0 && (
-            <Link to="/alerts" className="hidden md:inline-flex">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent relative">
-                <Bell className="h-4 w-4" />
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
-                  {alertCount > 9 ? '9+' : alertCount}
-                </span>
-              </Button>
-            </Link>
-          )}
-
-          <Button variant="ghost" size="sm" onClick={() => setDemoMode(!demoMode)}
-            className="hidden md:inline-flex h-8 px-3 text-xs rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent">
-            <FlaskConical className="h-3.5 w-3.5 mr-1.5" />
-            {demoMode ? 'Exit Demo' : 'Demo'}
-          </Button>
-
-          <Link to="/settings" className="hidden md:inline-flex">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent">
-              <Settings className="h-4 w-4" />
-            </Button>
+            <span className="font-semibold text-[14px] tracking-tight text-foreground hidden sm:inline">
+              PharmaShield
+            </span>
           </Link>
 
-          {user ? (
-            <Button variant="ghost" size="icon" onClick={signOut} className="hidden md:inline-flex h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Link to="/login" className="hidden md:inline-flex">
-              <Button size="sm" className="h-8 px-5 text-[12px] rounded-full font-semibold">Connect Wallet</Button>
-            </Link>
+          {/* Divider */}
+          {!isLanding && navItems.length > 0 && (
+            <div className="hidden md:block h-4 w-px bg-border/60 mx-1" />
           )}
 
-          <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </Button>
+          {/* Landing nav */}
+          {isLanding && (
+            <nav className="hidden md:flex items-center gap-0.5 ml-4">
+              {[
+                { label: 'About', href: '#technology' },
+                { label: 'Technology', href: '#technology' },
+                { label: 'Consumer', to: '/consumer' },
+                { label: 'Dashboard', to: '/login' },
+              ].map((item) =>
+                'to' in item ? (
+                  <Link key={item.label} to={item.to!}>
+                    <button className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-all duration-150">
+                      {item.label}
+                    </button>
+                  </Link>
+                ) : (
+                  <a key={item.label} href={item.href}>
+                    <button className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent/70 transition-all duration-150">
+                      {item.label}
+                    </button>
+                  </a>
+                )
+              )}
+            </nav>
+          )}
+
+          {/* App nav - pill style */}
+          {!isLanding && navItems.length > 0 && (
+            <nav className="hidden md:flex items-center gap-0.5 rounded-lg bg-muted/50 p-0.5">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link key={item.path} to={item.path}>
+                    <button className={`px-3 py-1 rounded-md text-[12px] font-medium transition-all duration-150 relative ${
+                      isActive
+                        ? 'bg-card text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}>
+                      {item.label}
+                      {item.label === 'Alerts' && alertCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground px-1">
+                          {alertCount > 9 ? '9+' : alertCount}
+                        </span>
+                      )}
+                    </button>
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
+
+          {/* Right section */}
+          <div className="ml-auto flex items-center gap-1.5">
+            {user && (
+              <Link to="/search" className="hidden md:inline-flex">
+                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground">
+                  <Search className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            )}
+
+            {walletAddress && onSepolia !== null && isBlockchainConfigured() && (
+              onSepolia ? (
+                <Badge variant="secondary" className="hidden md:inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/8 text-success border-success/15 gap-1">
+                  <Wifi className="h-2.5 w-2.5" /> Sepolia
+                </Badge>
+              ) : (
+                <Button variant="outline" size="sm" onClick={handleSwitchNetwork}
+                  className="hidden md:inline-flex h-6 px-2 text-[10px] rounded-full border-warning/30 text-warning hover:bg-warning/10">
+                  <Wifi className="h-2.5 w-2.5 mr-1" /> Switch Network
+                </Button>
+              )
+            )}
+
+            {demoMode && (
+              <div className="hidden md:flex items-center gap-1.5 rounded-full border border-warning/20 bg-warning/5 px-2.5 py-0.5">
+                <FlaskConical className="h-3 w-3 text-warning" />
+                <Select value={demoRole} onValueChange={(v) => setDemoRole(v as AppRole)}>
+                  <SelectTrigger className="h-5 w-[100px] text-[10px] border-0 bg-transparent p-0 shadow-none focus:ring-0 text-warning">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manufacturer">Manufacturer</SelectItem>
+                    <SelectItem value="distributor">Distributor</SelectItem>
+                    <SelectItem value="pharmacy">Pharmacy</SelectItem>
+                    <SelectItem value="consumer">Consumer</SelectItem>
+                    <SelectItem value="regulator">Regulator</SelectItem>
+                    <SelectItem value="auditor">Auditor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {walletAddress && (
+              <Badge variant="secondary" className="hidden md:inline-flex text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-muted/70 text-muted-foreground border-border/50">
+                <Wallet className="h-2.5 w-2.5 mr-1" />
+                {shortenAddress(walletAddress)}
+              </Badge>
+            )}
+
+            {activeRole && (
+              <Badge variant="secondary" className="hidden md:inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/8 text-primary border-primary/15">
+                {roleLabels[activeRole]}
+              </Badge>
+            )}
+
+            {alertCount > 0 && (
+              <Link to="/alerts" className="hidden md:inline-flex">
+                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground relative">
+                  <Bell className="h-3.5 w-3.5" />
+                  <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground">
+                    {alertCount > 9 ? '9+' : alertCount}
+                  </span>
+                </Button>
+              </Link>
+            )}
+
+            <Button variant="ghost" size="sm" onClick={() => setDemoMode(!demoMode)}
+              className="hidden md:inline-flex h-7 px-2.5 text-[11px] rounded-lg text-muted-foreground hover:text-foreground gap-1">
+              <FlaskConical className="h-3 w-3" />
+              {demoMode ? 'Exit' : 'Demo'}
+            </Button>
+
+            <Link to="/settings" className="hidden md:inline-flex">
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground">
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+
+            {user ? (
+              <Button variant="ghost" size="icon" onClick={signOut} className="hidden md:inline-flex h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground">
+                <LogOut className="h-3.5 w-3.5" />
+              </Button>
+            ) : (
+              <Link to="/login" className="hidden md:inline-flex">
+                <Button size="sm" className="h-7 px-4 text-[11px] rounded-full font-semibold">
+                  Connect Wallet
+                </Button>
+              </Link>
+            )}
+
+            <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 rounded-lg text-muted-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
+              {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </div>
 
+      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-border glass animate-fade-in">
-          <div className="container py-3 flex flex-col gap-1">
+        <div className="md:hidden bg-card/95 backdrop-blur-2xl border-b border-border/40 animate-fade-in">
+          <div className="container py-3 flex flex-col gap-0.5">
             {isLanding && (
               <>
                 <a href="#technology" onClick={() => setMobileOpen(false)}>
-                  <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-foreground hover:bg-accent">Technology</div>
+                  <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-foreground hover:bg-accent/60 transition-colors">Technology</div>
                 </a>
                 <Link to="/consumer" onClick={() => setMobileOpen(false)}>
-                  <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-foreground hover:bg-accent">Consumer Verify</div>
+                  <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-foreground hover:bg-accent/60 transition-colors">Consumer Verify</div>
                 </Link>
-                <div className="h-px bg-border my-1" />
+                <div className="h-px bg-border/40 my-1.5" />
               </>
             )}
             {navItems.map((item) => {
@@ -265,20 +287,20 @@ export function Navbar() {
               return (
                 <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}>
                   <div className={`px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
-                    isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent'
+                    isActive ? 'bg-primary/8 text-primary' : 'text-foreground hover:bg-accent/60'
                   }`}>{item.label}</div>
                 </Link>
               );
             })}
-            <div className="h-px bg-border my-1" />
+            <div className="h-px bg-border/40 my-1.5" />
             <Link to="/search" onClick={() => setMobileOpen(false)}>
-              <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground hover:bg-accent">Search</div>
+              <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground hover:bg-accent/60">Search</div>
             </Link>
-            <button onClick={() => { setDemoMode(!demoMode); setMobileOpen(false); }} className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground text-left hover:bg-accent">
+            <button onClick={() => { setDemoMode(!demoMode); setMobileOpen(false); }} className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground text-left hover:bg-accent/60">
               {demoMode ? 'Exit Demo Mode' : 'Enable Demo Mode'}
             </button>
             <Link to="/settings" onClick={() => setMobileOpen(false)}>
-              <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground hover:bg-accent">Settings</div>
+              <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground hover:bg-accent/60">Settings</div>
             </Link>
             {user ? (
               <button onClick={() => { signOut(); setMobileOpen(false); }} className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-destructive text-left">Disconnect Wallet</button>
