@@ -1,107 +1,107 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, LogOut, FlaskConical } from 'lucide-react';
-import type { AppRole } from '@/types';
-
-const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
-  manufacturer: [
-    { label: 'Register Batch', path: '/register' },
-    { label: 'My Batches', path: '/batches' },
-  ],
-  pharmacy: [
-    { label: 'Verify Batch', path: '/verify' },
-  ],
-  regulator: [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'All Batches', path: '/batches' },
-    { label: 'Scan Logs', path: '/logs' },
-  ],
-};
-
-const roleColors: Record<AppRole, string> = {
-  manufacturer: 'bg-primary text-primary-foreground',
-  pharmacy: 'bg-success text-success-foreground',
-  regulator: 'bg-warning text-warning-foreground',
-};
+import { Shield, LogOut, Settings, Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
 export function Navbar() {
-  const { activeRole, demoMode, demoRole, setDemoMode, setDemoRole, user, signOut } = useAuth();
-  const location = useLocation();
+  const { user, activeRole, logout, demoMode } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navItems = activeRole ? roleNavItems[activeRole] : [];
+  const navLinks = activeRole && user ? [
+    { label: 'Dashboard', href: '/' },
+    ...(activeRole === 'manufacturer' ? [{ label: 'Register', href: '/register' }, { label: 'My Batches', href: '/batches' }] : []),
+    ...(activeRole === 'pharmacy' ? [{ label: 'Verify', href: '/verify' }] : []),
+    ...(activeRole === 'regulator' ? [{ label: 'Dashboard', href: '/dashboard' }, { label: 'Logs', href: '/logs' }] : []),
+  ] : [];
 
   return (
-    <header className="border-b bg-card">
-      <div className="container flex h-14 items-center gap-4">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <Shield className="h-5 w-5 text-primary" />
-          <span>PharmaShield</span>
-        </Link>
-
-        <nav className="flex items-center gap-1 ml-4">
-          {navItems.map((item) => (
-            <Link key={item.path} to={item.path}>
-              <Button
-                variant={location.pathname === item.path ? 'secondary' : 'ghost'}
-                size="sm"
-              >
-                {item.label}
-              </Button>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="ml-auto flex items-center gap-3">
-          {demoMode && (
-            <div className="flex items-center gap-2 rounded-md border border-warning/50 bg-warning/10 px-3 py-1">
-              <FlaskConical className="h-4 w-4 text-warning" />
-              <span className="text-xs font-medium">Demo</span>
-              <Select value={demoRole} onValueChange={(v) => setDemoRole(v as AppRole)}>
-                <SelectTrigger className="h-7 w-[130px] text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manufacturer">Manufacturer</SelectItem>
-                  <SelectItem value="pharmacy">Pharmacy</SelectItem>
-                  <SelectItem value="regulator">Regulator</SelectItem>
-                </SelectContent>
-              </Select>
+    <nav className="glass border-b border-white/10 sticky top-0 z-50 backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+              <Shield className="w-6 h-6 text-white" />
             </div>
-          )}
-
-          {activeRole && (
-            <Badge className={roleColors[activeRole]}>
-              {activeRole.charAt(0).toUpperCase() + activeRole.slice(1)}
-            </Badge>
-          )}
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDemoMode(!demoMode)}
-          >
-            <FlaskConical className="h-4 w-4 mr-1" />
-            {demoMode ? 'Exit Demo' : 'Demo'}
-          </Button>
-
-          {user ? (
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Link to="/login">
-              <Button size="sm">Sign In</Button>
-            </Link>
-          )}
-
-          <Link to="/settings">
-            <Button variant="ghost" size="sm">Settings</Button>
+            <span className="font-bold text-lg hidden sm:inline bg-clip-text text-transparent bg-gradient-to-r from-foreground to-primary">
+              PharmaShield
+            </span>
           </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link key={link.href} to={link.href}>
+                <Button variant="ghost" className="text-foreground/70 hover:text-foreground">
+                  {link.label}
+                </Button>
+              </Link>
+            ))}
+          </div>
+
+          {/* Right Section */}
+          <div className="flex items-center gap-2">
+            {user && (
+              <div className="hidden sm:flex items-center gap-3">
+                <div className="glass px-3 py-1.5 rounded-lg text-xs font-medium">
+                  <span className="text-primary capitalize">{activeRole}</span>
+                  {demoMode && <span className="text-muted-foreground ml-2">(Demo)</span>}
+                </div>
+              </div>
+            )}
+            
+            {user ? (
+              <div className="flex items-center gap-2">
+                <Link to="/settings">
+                  <Button size="icon" variant="ghost">
+                    <Settings className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Button size="sm" variant="outline" onClick={logout} className="gap-2">
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden sm:inline">Logout</span>
+                </Button>
+              </div>
+            ) : (
+              <Link to="/login">
+                <Button size="sm" className="gap-2">
+                  Sign In
+                </Button>
+              </Link>
+            )}
+
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileOpen && (
+          <div className="md:hidden pb-4 space-y-2 border-t border-white/10 pt-4">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.href} 
+                to={link.href}
+                onClick={() => setMobileOpen(false)}
+              >
+                <Button variant="ghost" className="w-full justify-start">
+                  {link.label}
+                </Button>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
-    </header>
+    </nav>
   );
 }
