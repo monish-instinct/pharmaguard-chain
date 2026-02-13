@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,14 +9,28 @@ import { isMetaMaskAvailable, isPhantomAvailable, shortenAddress } from '@/lib/w
 import { toast } from 'sonner';
 import type { AppRole } from '@/types';
 
+const roleRedirectMap: Record<AppRole, string> = {
+  manufacturer: '/register',
+  pharmacy: '/verify',
+  regulator: '/dashboard',
+};
+
 export default function Login() {
   const navigate = useNavigate();
-  const { connectWithWallet, walletConnecting, walletAddress, user, roles } = useAuth();
+  const { connectWithWallet, walletConnecting, walletAddress, user, roles, loading } = useAuth();
   const [selectedRole, setSelectedRole] = useState<AppRole>('manufacturer');
   const [savingRole, setSavingRole] = useState(false);
 
   const isConnected = !!walletAddress && !!user;
   const hasRole = roles.length > 0;
+
+  // Auto-redirect if already connected with a role
+  useEffect(() => {
+    if (!loading && isConnected && hasRole) {
+      const targetPath = roleRedirectMap[roles[0]] || '/';
+      navigate(targetPath, { replace: true });
+    }
+  }, [loading, isConnected, hasRole, roles, navigate]);
 
   const handleConnect = async (wallet: 'metamask' | 'phantom') => {
     await connectWithWallet(wallet);
@@ -30,9 +44,16 @@ export default function Login() {
         user_id: user.id,
         role: selectedRole,
       });
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') {
+          // Duplicate — user already has this role, just redirect
+        } else {
+          throw error;
+        }
+      }
       toast.success('Role assigned! Redirecting...');
-      setTimeout(() => navigate('/'), 600);
+      const targetPath = roleRedirectMap[selectedRole] || '/';
+      setTimeout(() => navigate(targetPath, { replace: true }), 400);
     } catch (err: any) {
       toast.error(err.message || 'Failed to assign role');
     } finally {
@@ -40,18 +61,19 @@ export default function Login() {
     }
   };
 
-  if (isConnected && hasRole) {
-    navigate('/');
-    return null;
+  if (loading) {
+    return (
+      <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </main>
+    );
   }
 
   return (
     <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4 relative">
-      {/* Ambient glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
       
       <div className="w-full max-w-sm animate-scale-in relative z-10">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary glow-primary">
             <Shield className="h-7 w-7 text-primary-foreground" />
@@ -66,7 +88,6 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Connect / Role Card */}
         <div className="apple-card p-6">
           {!isConnected ? (
             <div className="flex flex-col gap-3">
@@ -101,7 +122,6 @@ export default function Login() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {/* Connected wallet */}
               <div className="flex items-center gap-3 p-3 rounded-xl bg-success/5 border border-success/20">
                 <CheckCircle className="h-5 w-5 text-success shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -110,7 +130,6 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Role selection */}
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-medium text-foreground">Your Role</label>
                 <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
