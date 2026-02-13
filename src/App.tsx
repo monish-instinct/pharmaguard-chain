@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import RegisterBatch from "./pages/RegisterBatch";
@@ -13,6 +14,9 @@ import VerifyBatch from "./pages/VerifyBatch";
 import Dashboard from "./pages/Dashboard";
 import ScanLogs from "./pages/ScanLogs";
 import Settings from "./pages/Settings";
+import Alerts from "./pages/Alerts";
+import AuditLogs from "./pages/AuditLogs";
+import SupplyChain from "./pages/SupplyChain";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,11 +32,14 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<RegisterBatch />} />
-            <Route path="/batches" element={<MyBatches />} />
+            <Route path="/register" element={<ProtectedRoute allowedRoles={['manufacturer']}><RegisterBatch /></ProtectedRoute>} />
+            <Route path="/batches" element={<ProtectedRoute><MyBatches /></ProtectedRoute>} />
             <Route path="/verify" element={<VerifyBatch />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/logs" element={<ScanLogs />} />
+            <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['regulator']}><Dashboard /></ProtectedRoute>} />
+            <Route path="/logs" element={<ProtectedRoute><ScanLogs /></ProtectedRoute>} />
+            <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
+            <Route path="/audit" element={<ProtectedRoute><AuditLogs /></ProtectedRoute>} />
+            <Route path="/supply-chain" element={<ProtectedRoute><SupplyChain /></ProtectedRoute>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

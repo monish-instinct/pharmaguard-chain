@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { verifyBatchOnChain, isBlockchainConfigured } from '@/lib/blockchain';
-import { detectAnomalies } from '@/lib/anomaly';
-import { ScanLine, CheckCircle, AlertTriangle, XCircle, Camera, Loader2, Search } from 'lucide-react';
+import { detectAnomalies, type RiskAssessment } from '@/lib/anomaly';
+import { RiskMeter } from '@/components/RiskBadge';
+import { ScanLine, CheckCircle, AlertTriangle, XCircle, Camera, Loader2, Search, Shield, Pill, Calendar, Globe, Package } from 'lucide-react';
 import { toast } from 'sonner';
-import type { VerificationResult } from '@/types';
+import type { Batch, VerificationResult } from '@/types';
 
 const statusConfig: Record<VerificationResult, { icon: React.ElementType; label: string; color: string; bg: string; glow: string }> = {
   authentic: { icon: CheckCircle, label: 'Authentic', color: 'text-success', bg: 'bg-success/5 border-success/20', glow: 'glow-success' },
@@ -22,7 +23,8 @@ export default function VerifyBatch() {
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [scannedId, setScannedId] = useState('');
-  const [anomalyFlags, setAnomalyFlags] = useState<string[]>([]);
+  const [risk, setRisk] = useState<RiskAssessment | null>(null);
+  const [batchInfo, setBatchInfo] = useState<Batch | null>(null);
   const [loading, setLoading] = useState(false);
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrRef = useRef<any>(null);
@@ -73,7 +75,8 @@ export default function VerifyBatch() {
     setLoading(true);
     setScannedId(batchId);
     setResult(null);
-    setAnomalyFlags([]);
+    setRisk(null);
+    setBatchInfo(null);
 
     try {
       const loc = await getLocation();
@@ -82,7 +85,7 @@ export default function VerifyBatch() {
         const chainResult = await verifyBatchOnChain(batchId);
         if (chainResult && !chainResult.exists) {
           setResult('not_found');
-          await logScan(batchId, 'not_found', loc, []);
+          await logScan(batchId, 'not_found', loc, [], 0);
           return;
         }
       }
@@ -90,15 +93,29 @@ export default function VerifyBatch() {
       const { data: batch } = await supabase.from('batches').select('*').eq('batch_id', batchId).maybeSingle();
       if (!batch) {
         setResult('not_found');
-        await logScan(batchId, 'not_found', loc, []);
+        await logScan(batchId, 'not_found', loc, [], 0);
         return;
       }
 
-      const { isSuspicious, flags } = await detectAnomalies(batchId, loc?.lat ?? null, loc?.lng ?? null);
-      const status: VerificationResult = isSuspicious ? 'suspicious' : 'authentic';
+      setBatchInfo(batch as unknown as Batch);
+      const assessment = await detectAnomalies(batchId, loc?.lat ?? null, loc?.lng ?? null);
+      const status: VerificationResult = assessment.isSuspicious ? 'suspicious' : 'authentic';
       setResult(status);
-      setAnomalyFlags(flags);
-      await logScan(batchId, status, loc, flags);
+      setRisk(assessment);
+      await logScan(batchId, status, loc, assessment.flags, assessment.riskScore);
+
+      // Create alert if high risk
+      if (assessment.riskScore >= 45) {
+        await supabase.from('alerts').insert({
+          batch_id: batchId,
+          alert_type: assessment.riskLevel === 'critical' ? 'critical_risk' : 'suspicious_scan',
+          severity: assessment.riskLevel,
+          message: assessment.flags[0] || 'Suspicious activity detected',
+          risk_score: assessment.riskScore,
+          latitude: loc?.lat ?? null,
+          longitude: loc?.lng ?? null,
+        });
+      }
     } catch (err: any) {
       toast.error(err.message || 'Verification failed');
     } finally {
@@ -106,12 +123,7 @@ export default function VerifyBatch() {
     }
   };
 
-  const logScan = async (
-    batchId: string,
-    status: VerificationResult,
-    loc: { lat: number; lng: number } | null,
-    flags: string[]
-  ) => {
+  const logScan = async (batchId: string, status: VerificationResult, loc: { lat: number; lng: number } | null, flags: string[], riskScore: number) => {
     if (demoMode) return;
     await supabase.from('scan_logs').insert({
       batch_id: batchId,
@@ -120,6 +132,13 @@ export default function VerifyBatch() {
       latitude: loc?.lat ?? null,
       longitude: loc?.lng ?? null,
       anomaly_flags: flags,
+    });
+    await supabase.from('audit_logs').insert({
+      action: 'batch_verified',
+      entity_type: 'scan',
+      entity_id: batchId,
+      actor_id: user?.id ?? null,
+      details: { status, risk_score: riskScore },
     });
   };
 
@@ -143,13 +162,12 @@ export default function VerifyBatch() {
       </div>
 
       <div className="flex flex-col gap-4">
+        {/* Scanner Card */}
         <div className="apple-card p-6">
           <div id="qr-reader" ref={scannerRef} className={scanning ? 'rounded-xl overflow-hidden mb-4' : 'hidden'} />
-          
           {!scanning ? (
             <Button onClick={startScanner} className="w-full h-12 rounded-xl text-[14px] font-medium glow-primary">
-              <Camera className="h-4 w-4 mr-2" />
-              Open Camera Scanner
+              <Camera className="h-4 w-4 mr-2" /> Open Camera Scanner
             </Button>
           ) : (
             <Button variant="outline" onClick={stopScanner} className="w-full h-12 rounded-xl text-[14px] font-medium border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive">
@@ -158,29 +176,23 @@ export default function VerifyBatch() {
           )}
 
           <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
             <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
               <span className="bg-card px-3 text-muted-foreground font-medium">or enter manually</span>
             </div>
           </div>
 
           <form onSubmit={handleManualVerify} className="flex gap-2">
-            <Input
-              placeholder="Enter Batch ID"
-              value={manualId}
-              onChange={(e) => setManualId(e.target.value)}
-              className="h-11 rounded-xl text-[14px] flex-1"
-            />
+            <Input placeholder="Enter Batch ID" value={manualId} onChange={(e) => setManualId(e.target.value)} className="h-11 rounded-xl text-[14px] flex-1" />
             <Button type="submit" disabled={loading} className="h-11 rounded-xl px-5">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             </Button>
           </form>
         </div>
 
+        {/* Result Card */}
         {result && StatusIcon && (
-          <div className={`apple-card border-2 p-8 flex flex-col items-center gap-4 animate-scale-in ${statusConfig[result].bg} ${statusConfig[result].glow}`}>
+          <div className={`apple-card border-2 p-6 flex flex-col items-center gap-4 animate-scale-in ${statusConfig[result].bg} ${statusConfig[result].glow}`}>
             <StatusIcon className={`h-14 w-14 ${statusConfig[result].color}`} />
             <Badge className={`text-[14px] px-4 py-1.5 rounded-full font-semibold ${
               result === 'authentic' ? 'bg-success text-success-foreground' :
@@ -190,9 +202,29 @@ export default function VerifyBatch() {
               {statusConfig[result].label}
             </Badge>
             <p className="font-mono text-[13px] text-muted-foreground">{scannedId}</p>
-            {anomalyFlags.length > 0 && (
-              <div className="w-full mt-1 flex flex-col gap-1.5">
-                {anomalyFlags.map((flag, i) => (
+
+            {/* Risk Score */}
+            {risk && risk.riskScore > 0 && (
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[12px] font-medium text-muted-foreground">Risk Score</span>
+                  <Badge variant="outline" className={`text-[10px] rounded-full px-2 py-0 capitalize ${
+                    risk.riskLevel === 'critical' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                    risk.riskLevel === 'high' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                    risk.riskLevel === 'medium' ? 'bg-warning/10 text-warning border-warning/20' :
+                    'bg-success/10 text-success border-success/20'
+                  }`}>
+                    {risk.riskLevel}
+                  </Badge>
+                </div>
+                <RiskMeter score={risk.riskScore} />
+              </div>
+            )}
+
+            {/* Anomaly Flags */}
+            {risk && risk.flags.length > 0 && (
+              <div className="w-full flex flex-col gap-1.5">
+                {risk.flags.map((flag, i) => (
                   <div key={i} className="text-[13px] text-warning bg-warning/5 border border-warning/15 rounded-xl px-4 py-2.5 flex items-start gap-2">
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>{flag}</span>
@@ -202,7 +234,53 @@ export default function VerifyBatch() {
             )}
           </div>
         )}
+
+        {/* Consumer-Friendly Batch Info */}
+        {batchInfo && result === 'authentic' && (
+          <div className="apple-card p-6 animate-fade-in">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="h-4 w-4 text-success" />
+              <span className="text-[14px] font-semibold text-foreground">Verified Medicine Details</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {batchInfo.medicine_name && (
+                <InfoItem icon={Pill} label="Medicine" value={batchInfo.medicine_name} />
+              )}
+              {batchInfo.dosage && (
+                <InfoItem icon={Package} label="Dosage" value={batchInfo.dosage} />
+              )}
+              {batchInfo.manufacturer_name && (
+                <InfoItem icon={Package} label="Manufacturer" value={batchInfo.manufacturer_name} />
+              )}
+              {batchInfo.country_of_origin && (
+                <InfoItem icon={Globe} label="Origin" value={batchInfo.country_of_origin} />
+              )}
+              {batchInfo.manufacturing_date && (
+                <InfoItem icon={Calendar} label="Mfg Date" value={new Date(batchInfo.manufacturing_date).toLocaleDateString()} />
+              )}
+              {batchInfo.expiry_date && (
+                <InfoItem icon={Calendar} label="Expiry" value={new Date(batchInfo.expiry_date).toLocaleDateString()} />
+              )}
+            </div>
+            <div className="mt-4 pt-3 border-t border-border flex items-center gap-2 text-[11px] text-muted-foreground">
+              <CheckCircle className="h-3 w-3 text-success" />
+              Verified at {new Date().toLocaleString()}
+            </div>
+          </div>
+        )}
       </div>
     </main>
+  );
+}
+
+function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-2 p-3 rounded-xl bg-accent/50">
+      <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+      <div>
+        <p className="text-[11px] text-muted-foreground">{label}</p>
+        <p className="text-[13px] font-medium text-foreground">{value}</p>
+      </div>
+    </div>
   );
 }

@@ -16,6 +16,11 @@ export interface Batch {
   blockchain_tx_hash: string | null;
   registered_by: string | null;
   created_at: string;
+  medicine_name: string | null;
+  expiry_date: string | null;
+  manufacturing_date: string | null;
+  dosage: string | null;
+  country_of_origin: string | null;
 }
 
 export interface ScanLog {
