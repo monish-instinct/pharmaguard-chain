@@ -132,7 +132,7 @@ function LandingPage() {
             <div className="h-3 w-px bg-border" />
             <div className="flex items-center gap-1.5 text-[12px]">
               <Blocks className="h-3.5 w-3.5" />
-              <span>Polygon Network</span>
+              <span>Sepolia Network</span>
             </div>
             <div className="h-3 w-px bg-border" />
             <div className="flex items-center gap-1.5 text-[12px]">
@@ -167,7 +167,7 @@ function LandingPage() {
         </div>
 
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          <FeatureCard icon={Blocks} title="Blockchain Registry" description="Every drug batch is cryptographically registered on the Polygon network with an immutable on-chain record." />
+          <FeatureCard icon={Blocks} title="Blockchain Registry" description="Every drug batch is cryptographically registered on the Ethereum Sepolia network with an immutable on-chain record." />
           <FeatureCard icon={QrCode} title="QR Verification" description="Auto-generated QR codes link directly to blockchain records. Scan with any camera to verify authenticity instantly." />
           <FeatureCard icon={Eye} title="AI Anomaly Detection" description="Intelligent rule-based detection flags suspicious patterns like rapid scans from distant locations." />
           <FeatureCard icon={Fingerprint} title="Wallet Authentication" description="Passwordless login via MetaMask or Phantom. Your wallet address is your identity — no emails required." />
@@ -189,7 +189,7 @@ function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-12 md:gap-8">
-            <StepCard step={1} icon={Package} title="Register Batch" description="Manufacturer registers drug batch details. A smart contract stores the data on Polygon and a unique QR code is generated." />
+            <StepCard step={1} icon={Package} title="Register Batch" description="Manufacturer registers drug batch details. A smart contract stores the data on Sepolia and a unique QR code is generated." />
             <StepCard step={2} icon={ScanLine} title="Scan & Verify" description="Pharmacy scans the QR code. The system queries the blockchain and returns an instant Authentic, Suspicious, or Not Found result." />
             <StepCard step={3} icon={Cpu} title="Detect Anomalies" description="AI rules analyze scan patterns in real-time. Geographic velocity checks and frequency thresholds flag suspicious activity automatically." />
           </div>
@@ -290,7 +290,7 @@ function LandingPage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {[
-            { icon: Blocks, label: 'Polygon', desc: 'EVM Blockchain' },
+            { icon: Blocks, label: 'Sepolia', desc: 'Ethereum Testnet' },
             { icon: Zap, label: 'Supabase', desc: 'Realtime Backend' },
             { icon: Shield, label: 'Ethers.js', desc: 'Web3 Integration' },
             { icon: TrendingUp, label: 'Recharts', desc: 'Data Visualization' },

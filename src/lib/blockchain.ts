@@ -10,13 +10,13 @@ const CONTRACT_ABI = [
   "event BatchVerified(string indexed batchId, address indexed verifier, uint256 timestamp)",
 ];
 
-const POLYGON_AMOY_CHAIN_ID = '0x13882'; // 80002
-const POLYGON_AMOY_CONFIG = {
-  chainId: POLYGON_AMOY_CHAIN_ID,
-  chainName: 'Polygon Amoy Testnet',
-  nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-  rpcUrls: ['https://rpc-amoy.polygon.technology'],
-  blockExplorerUrls: ['https://amoy.polygonscan.com/'],
+const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111
+const SEPOLIA_CONFIG = {
+  chainId: SEPOLIA_CHAIN_ID,
+  chainName: 'Ethereum Sepolia Testnet',
+  nativeCurrency: { name: 'SepoliaETH', symbol: 'ETH', decimals: 18 },
+  rpcUrls: ['https://rpc.sepolia.org'],
+  blockExplorerUrls: ['https://sepolia.etherscan.io/'],
 };
 
 export const getContractAddress = (): string | null => {
@@ -50,17 +50,17 @@ export const getCurrentNetwork = async (): Promise<string | null> => {
   }
 };
 
-export const isOnPolygon = async (): Promise<boolean> => {
+export const isOnSepolia = async (): Promise<boolean> => {
   const chainId = await getCurrentNetwork();
-  return chainId === POLYGON_AMOY_CHAIN_ID;
+  return chainId === SEPOLIA_CHAIN_ID;
 };
 
-export const switchToPolygon = async (): Promise<boolean> => {
+export const switchToSepolia = async (): Promise<boolean> => {
   if (!(window as any).ethereum) return false;
   try {
     await (window as any).ethereum.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: POLYGON_AMOY_CHAIN_ID }],
+      params: [{ chainId: SEPOLIA_CHAIN_ID }],
     });
     return true;
   } catch (switchError: any) {
@@ -68,7 +68,7 @@ export const switchToPolygon = async (): Promise<boolean> => {
       try {
         await (window as any).ethereum.request({
           method: 'wallet_addEthereumChain',
-          params: [POLYGON_AMOY_CONFIG],
+          params: [SEPOLIA_CONFIG],
         });
         return true;
       } catch {

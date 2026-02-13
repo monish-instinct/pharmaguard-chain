@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Shield, LogOut, FlaskConical, Settings, Menu, X, Wallet, Bell, Wifi } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { shortenAddress } from '@/lib/wallet';
-import { isOnPolygon, switchToPolygon, isBlockchainConfigured } from '@/lib/blockchain';
+import { isOnSepolia, switchToSepolia, isBlockchainConfigured } from '@/lib/blockchain';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AppRole } from '@/types';
@@ -45,7 +45,7 @@ export function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
-  const [onPolygon, setOnPolygon] = useState<boolean | null>(null);
+  const [onSepolia, setOnSepolia] = useState<boolean | null>(null);
 
   const navItems = activeRole ? roleNavItems[activeRole] : [];
 
@@ -58,20 +58,20 @@ export function Navbar() {
   // Check network on mount and on chain change
   useEffect(() => {
     if (!walletAddress || !isBlockchainConfigured()) return;
-    isOnPolygon().then(setOnPolygon);
+    isOnSepolia().then(setOnSepolia);
 
     const handleChainChanged = () => {
-      isOnPolygon().then(setOnPolygon);
+      isOnSepolia().then(setOnSepolia);
     };
     (window as any).ethereum?.on?.('chainChanged', handleChainChanged);
     return () => { (window as any).ethereum?.removeListener?.('chainChanged', handleChainChanged); };
   }, [walletAddress]);
 
   const handleSwitchNetwork = async () => {
-    const ok = await switchToPolygon();
+    const ok = await switchToSepolia();
     if (ok) {
-      toast.success('Switched to Polygon Amoy');
-      setOnPolygon(true);
+      toast.success('Switched to Ethereum Sepolia');
+      setOnSepolia(true);
     } else {
       toast.error('Failed to switch network');
     }
@@ -109,10 +109,10 @@ export function Navbar() {
 
         <div className="ml-auto flex items-center gap-2">
           {/* Network indicator */}
-          {walletAddress && onPolygon !== null && isBlockchainConfigured() && (
-            onPolygon ? (
+          {walletAddress && onSepolia !== null && isBlockchainConfigured() && (
+            onSepolia ? (
               <Badge variant="secondary" className="hidden md:inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/10 text-success border-success/20 gap-1">
-                <Wifi className="h-3 w-3" /> Polygon
+                <Wifi className="h-3 w-3" /> Sepolia
               </Badge>
             ) : (
               <Button
@@ -121,7 +121,7 @@ export function Navbar() {
                 onClick={handleSwitchNetwork}
                 className="hidden md:inline-flex h-6 px-2 text-[10px] rounded-full border-warning/30 text-warning hover:bg-warning/10"
               >
-                <Wifi className="h-3 w-3 mr-1" /> Switch to Polygon
+                <Wifi className="h-3 w-3 mr-1" /> Switch to Sepolia
               </Button>
             )
           )}

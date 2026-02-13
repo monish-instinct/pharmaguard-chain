@@ -74,7 +74,7 @@ export default function TransferOwnership() {
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Transfer Ownership</h1>
-          <p className="text-[13px] text-muted-foreground">Transfer batch ownership to another wallet via smart contract</p>
+          <p className="text-[13px] text-muted-foreground">Transfer batch ownership to another wallet via smart contract on Sepolia</p>
         </div>
       </div>
 
