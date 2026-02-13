@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { getProvider as getMetaMaskProvider } from '@/lib/wallet';
 
 const CONTRACT_ABI = [
   "function registerBatch(string batchId, string ipfsHash) external",
@@ -33,8 +34,9 @@ export const isBlockchainConfigured = (): boolean => {
 };
 
 const getProvider = () => {
-  if (typeof window !== 'undefined' && (window as any).ethereum) {
-    return new ethers.BrowserProvider((window as any).ethereum);
+  const metamask = getMetaMaskProvider();
+  if (metamask) {
+    return new ethers.BrowserProvider(metamask);
   }
   return null;
 };
@@ -56,9 +58,10 @@ export const isOnSepolia = async (): Promise<boolean> => {
 };
 
 export const switchToSepolia = async (): Promise<boolean> => {
-  if (!(window as any).ethereum) return false;
+  const provider = getMetaMaskProvider();
+  if (!provider) return false;
   try {
-    await (window as any).ethereum.request({
+    await provider.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: SEPOLIA_CHAIN_ID }],
     });
@@ -66,7 +69,7 @@ export const switchToSepolia = async (): Promise<boolean> => {
   } catch (switchError: any) {
     if (switchError.code === 4902) {
       try {
-        await (window as any).ethereum.request({
+        await provider.request({
           method: 'wallet_addEthereumChain',
           params: [SEPOLIA_CONFIG],
         });
