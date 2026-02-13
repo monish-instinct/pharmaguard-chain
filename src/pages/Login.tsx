@@ -11,8 +11,11 @@ import type { AppRole } from '@/types';
 
 const roleRedirectMap: Record<AppRole, string> = {
   manufacturer: '/register',
+  distributor: '/verify',
   pharmacy: '/verify',
+  consumer: '/consumer',
   regulator: '/dashboard',
+  auditor: '/audit',
 };
 
 export default function Login() {
@@ -127,8 +130,11 @@ export default function Login() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="manufacturer">Manufacturer</SelectItem>
-                    <SelectItem value="pharmacy">Pharmacy / Distributor</SelectItem>
+                    <SelectItem value="distributor">Distributor</SelectItem>
+                    <SelectItem value="pharmacy">Pharmacy</SelectItem>
+                    <SelectItem value="consumer">Consumer</SelectItem>
                     <SelectItem value="regulator">Regulator</SelectItem>
+                    <SelectItem value="auditor">Auditor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

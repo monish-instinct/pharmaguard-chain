@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
-import { Package, ExternalLink, Boxes } from 'lucide-react';
+import { Package, ExternalLink, Boxes, AlertOctagon } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { Batch } from '@/types';
 
@@ -67,6 +67,7 @@ export default function MyBatches() {
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">QR</th>
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch ID</th>
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Manufacturer</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Storage</th>
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Registered</th>
                 </tr>
@@ -81,6 +82,17 @@ export default function MyBatches() {
                     </td>
                     <td className="px-6 py-3 text-[13px] font-mono font-medium text-foreground">{batch.batch_id}</td>
                     <td className="px-6 py-3 text-[13px] text-foreground">{batch.manufacturer_name}</td>
+                    <td className="px-6 py-3">
+                      <Badge variant="outline" className={`text-[11px] font-medium rounded-full px-2.5 py-0.5 capitalize ${
+                        (batch as any).status === 'recalled' ? 'bg-destructive text-destructive-foreground border-destructive' :
+                        (batch as any).status === 'expired' ? 'bg-warning/10 text-warning border-warning/20' :
+                        (batch as any).status === 'sold' ? 'bg-primary/10 text-primary border-primary/20' :
+                        'bg-success/10 text-success border-success/20'
+                      }`}>
+                        {(batch as any).status === 'recalled' && <AlertOctagon className="h-3 w-3 mr-1" />}
+                        {(batch as any).status || 'active'}
+                      </Badge>
+                    </td>
                     <td className="px-6 py-3">
                       {batch.blockchain_tx_hash ? (
                         <Badge variant="outline" className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-primary/5 text-primary border-primary/20">

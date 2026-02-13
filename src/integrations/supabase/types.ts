@@ -96,10 +96,15 @@ export type Database = {
           dosage: string | null
           expiry_date: string | null
           id: string
+          image_url: string | null
           manufacturer_name: string
           manufacturing_date: string | null
           medicine_name: string | null
+          recalled_at: string | null
+          recalled_by: string | null
           registered_by: string | null
+          status: Database["public"]["Enums"]["batch_status"]
+          storage_conditions: string | null
         }
         Insert: {
           batch_hash: string
@@ -110,10 +115,15 @@ export type Database = {
           dosage?: string | null
           expiry_date?: string | null
           id?: string
+          image_url?: string | null
           manufacturer_name: string
           manufacturing_date?: string | null
           medicine_name?: string | null
+          recalled_at?: string | null
+          recalled_by?: string | null
           registered_by?: string | null
+          status?: Database["public"]["Enums"]["batch_status"]
+          storage_conditions?: string | null
         }
         Update: {
           batch_hash?: string
@@ -124,10 +134,48 @@ export type Database = {
           dosage?: string | null
           expiry_date?: string | null
           id?: string
+          image_url?: string | null
           manufacturer_name?: string
           manufacturing_date?: string | null
           medicine_name?: string | null
+          recalled_at?: string | null
+          recalled_by?: string | null
           registered_by?: string | null
+          status?: Database["public"]["Enums"]["batch_status"]
+          storage_conditions?: string | null
+        }
+        Relationships: []
+      }
+      consumer_reports: {
+        Row: {
+          batch_id: string
+          created_at: string
+          description: string | null
+          id: string
+          photo_url: string | null
+          report_type: string
+          reporter_id: string | null
+          status: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          photo_url?: string | null
+          report_type?: string
+          reporter_id?: string | null
+          status?: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          photo_url?: string | null
+          report_type?: string
+          reporter_id?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -230,6 +278,42 @@ export type Database = {
         }
         Relationships: []
       }
+      trust_scores: {
+        Row: {
+          complaint_count: number
+          id: string
+          manufacturer_id: string
+          manufacturer_name: string
+          score: number
+          suspicious_count: number
+          total_batches: number
+          updated_at: string
+          verified_count: number
+        }
+        Insert: {
+          complaint_count?: number
+          id?: string
+          manufacturer_id: string
+          manufacturer_name: string
+          score?: number
+          suspicious_count?: number
+          total_batches?: number
+          updated_at?: string
+          verified_count?: number
+        }
+        Update: {
+          complaint_count?: number
+          id?: string
+          manufacturer_id?: string
+          manufacturer_name?: string
+          score?: number
+          suspicious_count?: number
+          total_batches?: number
+          updated_at?: string
+          verified_count?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -262,7 +346,14 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "manufacturer" | "pharmacy" | "regulator"
+      app_role:
+        | "manufacturer"
+        | "pharmacy"
+        | "regulator"
+        | "distributor"
+        | "auditor"
+        | "consumer"
+      batch_status: "active" | "sold" | "recalled" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -390,7 +481,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["manufacturer", "pharmacy", "regulator"],
+      app_role: [
+        "manufacturer",
+        "pharmacy",
+        "regulator",
+        "distributor",
+        "auditor",
+        "consumer",
+      ],
+      batch_status: ["active", "sold", "recalled", "expired"],
     },
   },
 } as const
