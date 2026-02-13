@@ -62,52 +62,59 @@ export default function Dashboard() {
     : 100;
 
   return (
-    <div className="container py-8">
-      <h1 className="text-2xl font-bold flex items-center gap-2 mb-6">
-        <LayoutDashboard className="h-6 w-6 text-primary" />
-        Regulator Dashboard
-      </h1>
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-background px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-2 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+              <LayoutDashboard className="h-6 w-6 text-white" />
+            </div>
+            Regulator Dashboard
+          </h1>
+          <p className="text-lg text-foreground/60">Real-time pharmaceutical supply chain analytics</p>
+        </div>
 
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
-        {[
-          { label: 'Total Batches', value: totalBatches, icon: Package, color: 'text-primary' },
-          { label: 'Total Scans', value: totalScans, icon: ScanLine, color: 'text-primary' },
-          { label: 'Suspicious', value: suspiciousCount, icon: AlertTriangle, color: 'text-warning' },
-          { label: 'Authentic Rate', value: `${authenticRate}%`, icon: ShieldCheck, color: 'text-success' },
-        ].map((card) => (
-          <Card key={card.label}>
-            <CardContent className="pt-6">
+        {/* Stats Grid */}
+        <div className="grid gap-4 md:grid-cols-4 mb-8">
+          {[
+            { label: 'Total Batches', value: totalBatches, icon: Package, color: 'from-primary to-primary/70' },
+            { label: 'Total Scans', value: totalScans, icon: ScanLine, color: 'from-accent to-accent/70' },
+            { label: 'Suspicious', value: suspiciousCount, icon: AlertTriangle, color: 'from-warning to-warning/70' },
+            { label: 'Authentic Rate', value: `${authenticRate}%`, icon: ShieldCheck, color: 'from-success to-success/70' },
+          ].map((card) => (
+            <div key={card.label} className="glass rounded-2xl p-6 shadow-sm-ios hover:shadow-md-ios transition-all">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
-                  <p className="text-3xl font-bold">{card.value}</p>
+                  <p className="text-sm text-foreground/60 mb-1">{card.label}</p>
+                  <p className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">{card.value}</p>
                 </div>
-                <card.icon className={`h-8 w-8 ${card.color}`} />
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center shadow-md-ios`}>
+                  <card.icon className="h-6 w-6 text-white" />
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
 
-      <div className="grid gap-6 md:grid-cols-2 mb-8">
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Scan Activity</CardTitle></CardHeader>
+        {/* Charts Grid */}
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
+          <div className="glass rounded-2xl p-6 shadow-md-ios">
+            <h3 className="text-lg font-semibold mb-4">Scan Activity (Last 14 Days)</h3>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={dailyScans}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" fontSize={12} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(221, 83%, 53%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={dailyScans}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="date" fontSize={12} stroke="currentColor" />
+                  <YAxis stroke="currentColor" />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="hsl(162, 72%, 40%)" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+          </div>
 
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Verification Breakdown</CardTitle></CardHeader>
-          <CardContent>
+          <div className="glass rounded-2xl p-6 shadow-md-ios">
+            <h3 className="text-lg font-semibold mb-4">Verification Breakdown</h3>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie data={statusBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
@@ -118,14 +125,16 @@ export default function Dashboard() {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-lg">Recent Scan Activity</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <Table>
+        {/* Recent Activity Table */}
+        <div className="glass rounded-2xl overflow-hidden shadow-md-ios">
+          <div className="p-6 border-b border-border">
+            <h3 className="text-lg font-semibold">Recent Scan Activity</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Batch ID</TableHead>
@@ -159,10 +168,11 @@ export default function Dashboard() {
                   </TableRow>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

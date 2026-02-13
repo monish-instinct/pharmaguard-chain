@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { verifyBatchOnChain, isBlockchainConfigured } from '@/lib/blockchain';
 import { detectAnomalies } from '@/lib/anomaly';
+import { getBatchByBatchId, recordScanLog } from '@/integrations/supabase/services';
 import { ScanLine, CheckCircle, AlertTriangle, XCircle, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import type { VerificationResult } from '@/types';
@@ -79,31 +79,47 @@ export default function VerifyBatch() {
     try {
       const loc = await getLocation();
 
-      // Check blockchain first
+      // Step 1: Check blockchain first if configured
+      let blockchainVerified = false;
       if (isBlockchainConfigured()) {
-        const chainResult = await verifyBatchOnChain(batchId);
-        if (chainResult && !chainResult.exists) {
-          setResult('not_found');
-          await logScan(batchId, 'not_found', loc, []);
-          return;
+        try {
+          const chainResult = await verifyBatchOnChain(batchId);
+          if (chainResult && !chainResult.exists) {
+            setResult('not_found');
+            await logScan(batchId, 'not_found', loc, ['Batch not found on blockchain']);
+            return;
+          }
+          blockchainVerified = true;
+        } catch (err) {
+          console.error('[v0] Blockchain verification failed:', err);
+          // Continue with Supabase fallback
         }
       }
 
-      // Check Supabase
-      const { data: batch } = await supabase.from('batches').select('*').eq('batch_id', batchId).maybeSingle();
+      // Step 2: Check Supabase
+      const batch = await getBatchByBatchId(batchId);
       if (!batch) {
         setResult('not_found');
-        await logScan(batchId, 'not_found', loc, []);
+        await logScan(batchId, 'not_found', loc, ['Batch not found in database']);
         return;
       }
 
-      // Run anomaly detection
+      // Step 3: Run anomaly detection
       const { isSuspicious, flags } = await detectAnomalies(batchId, loc?.lat ?? null, loc?.lng ?? null);
       const status: VerificationResult = isSuspicious ? 'suspicious' : 'authentic';
+      
+      // Add blockchain status to flags if available
+      if (blockchainVerified) {
+        flags.unshift('✓ Verified on Polygon blockchain');
+      } else if (isBlockchainConfigured()) {
+        flags.push('⚠ Blockchain verification unavailable, verified in database only');
+      }
+
       setResult(status);
       setAnomalyFlags(flags);
       await logScan(batchId, status, loc, flags);
     } catch (err: any) {
+      console.error('[v0] Verification error:', err);
       toast.error(err.message || 'Verification failed');
     } finally {
       setLoading(false);
@@ -117,14 +133,14 @@ export default function VerifyBatch() {
     flags: string[]
   ) => {
     if (demoMode) return;
-    await supabase.from('scan_logs').insert({
-      batch_id: batchId,
-      scanner_user_id: user?.id ?? null,
-      verification_status: status,
-      latitude: loc?.lat ?? null,
-      longitude: loc?.lng ?? null,
-      anomaly_flags: flags,
-    });
+    await recordScanLog(
+      batchId,
+      status,
+      user?.id ?? null,
+      loc?.lat ?? null,
+      loc?.lng ?? null,
+      flags
+    );
   };
 
   const handleManualVerify = (e: React.FormEvent) => {
