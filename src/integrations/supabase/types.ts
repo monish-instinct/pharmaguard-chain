@@ -14,32 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          alert_type: string
+          batch_id: string
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          message: string
+          resolved: boolean
+          risk_score: number | null
+          severity: string
+        }
+        Insert: {
+          alert_type: string
+          batch_id: string
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          message: string
+          resolved?: boolean
+          risk_score?: number | null
+          severity?: string
+        }
+        Update: {
+          alert_type?: string
+          batch_id?: string
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          message?: string
+          resolved?: boolean
+          risk_score?: number | null
+          severity?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_wallet: string | null
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_wallet?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_wallet?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
       batches: {
         Row: {
           batch_hash: string
           batch_id: string
           blockchain_tx_hash: string | null
+          country_of_origin: string | null
           created_at: string
+          dosage: string | null
+          expiry_date: string | null
           id: string
           manufacturer_name: string
+          manufacturing_date: string | null
+          medicine_name: string | null
           registered_by: string | null
         }
         Insert: {
           batch_hash: string
           batch_id: string
           blockchain_tx_hash?: string | null
+          country_of_origin?: string | null
           created_at?: string
+          dosage?: string | null
+          expiry_date?: string | null
           id?: string
           manufacturer_name: string
+          manufacturing_date?: string | null
+          medicine_name?: string | null
           registered_by?: string | null
         }
         Update: {
           batch_hash?: string
           batch_id?: string
           blockchain_tx_hash?: string | null
+          country_of_origin?: string | null
           created_at?: string
+          dosage?: string | null
+          expiry_date?: string | null
           id?: string
           manufacturer_name?: string
+          manufacturing_date?: string | null
+          medicine_name?: string | null
           registered_by?: string | null
         }
         Relationships: []
@@ -104,6 +191,42 @@ export type Database = {
           scanned_at?: string
           scanner_user_id?: string | null
           verification_status?: string
+        }
+        Relationships: []
+      }
+      supply_chain_events: {
+        Row: {
+          actor_id: string | null
+          batch_id: string
+          created_at: string
+          event_type: string
+          from_wallet: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          to_wallet: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          batch_id: string
+          created_at?: string
+          event_type: string
+          from_wallet?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          to_wallet?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          batch_id?: string
+          created_at?: string
+          event_type?: string
+          from_wallet?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          to_wallet?: string | null
         }
         Relationships: []
       }

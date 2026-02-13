@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, Download } from 'lucide-react';
+import { downloadCSV } from '@/lib/export';
 import type { ScanLog } from '@/types';
 
 const statusBadgeClass: Record<string, string> = {
@@ -25,6 +27,17 @@ export default function ScanLogs() {
     fetchLogs();
   }, [filter]);
 
+  const handleExport = () => {
+    downloadCSV(logs.map(l => ({
+      batch_id: l.batch_id,
+      status: l.verification_status,
+      latitude: l.latitude,
+      longitude: l.longitude,
+      anomaly_flags: (l.anomaly_flags as string[])?.join('; ') || '',
+      scanned_at: l.scanned_at,
+    })), 'scan-logs');
+  };
+
   return (
     <main className="container py-10 animate-fade-in">
       <div className="flex items-center justify-between mb-8">
@@ -37,17 +50,22 @@ export default function ScanLogs() {
             <p className="text-[13px] text-muted-foreground">Verification scan history and anomaly flags</p>
           </div>
         </div>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-[140px] h-9 rounded-lg text-[13px]">
-            <SelectValue placeholder="Filter" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="authentic">Authentic</SelectItem>
-            <SelectItem value="suspicious">Suspicious</SelectItem>
-            <SelectItem value="not_found">Not Found</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-[140px] h-9 rounded-lg text-[13px]">
+              <SelectValue placeholder="Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="authentic">Authentic</SelectItem>
+              <SelectItem value="suspicious">Suspicious</SelectItem>
+              <SelectItem value="not_found">Not Found</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={handleExport} className="h-9 rounded-lg text-[12px] gap-1.5">
+            <Download className="h-3.5 w-3.5" /> CSV
+          </Button>
+        </div>
       </div>
 
       <div className="apple-card overflow-hidden">
@@ -89,18 +107,14 @@ export default function ScanLogs() {
                       </Badge>
                     </td>
                     <td className="px-6 py-3.5 text-[13px] text-muted-foreground">
-                      {log.latitude && log.longitude
-                        ? `${log.latitude.toFixed(2)}, ${log.longitude.toFixed(2)}`
-                        : 'Unknown'}
+                      {log.latitude && log.longitude ? `${log.latitude.toFixed(2)}, ${log.longitude.toFixed(2)}` : 'Unknown'}
                     </td>
                     <td className="px-6 py-3.5 text-[12px] text-muted-foreground max-w-[200px] truncate">
                       {log.anomaly_flags && (log.anomaly_flags as string[]).length > 0
                         ? (log.anomaly_flags as string[]).join('; ')
                         : '--'}
                     </td>
-                    <td className="px-6 py-3.5 text-[13px] text-muted-foreground">
-                      {new Date(log.scanned_at).toLocaleString()}
-                    </td>
+                    <td className="px-6 py-3.5 text-[13px] text-muted-foreground">{new Date(log.scanned_at).toLocaleString()}</td>
                   </tr>
                 ))
               )}
