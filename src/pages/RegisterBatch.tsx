@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { generateBatchHash, registerBatchOnChain, isBlockchainConfigured } from '@/lib/blockchain';
 import QRCode from 'qrcode';
-import { Package, Download } from 'lucide-react';
+import { Package, Download, Loader2, CheckCircle } from 'lucide-react';
 
 export default function RegisterBatch() {
   const { user, demoMode } = useAuth();
@@ -64,58 +63,83 @@ export default function RegisterBatch() {
   };
 
   return (
-    <div className="container max-w-2xl py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Package className="h-6 w-6 text-primary" />
-          Register New Batch
-        </h1>
-        <p className="text-muted-foreground mt-1">Register a drug batch and generate its QR code</p>
+    <main className="container max-w-2xl py-10 animate-fade-in">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <Package className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Register Batch</h1>
+            <p className="text-[13px] text-muted-foreground">Register a new drug batch and generate its QR code</p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Batch Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="batchId">Batch ID</Label>
-                <Input id="batchId" placeholder="e.g. BATCH-2026-001" value={batchId} onChange={(e) => setBatchId(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="manufacturer">Manufacturer Name</Label>
-                <Input id="manufacturer" placeholder="e.g. PharmaCorp" value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} required />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Registering...' : 'Register Batch'}
-              </Button>
-              {!isBlockchainConfigured() && (
-                <p className="text-xs text-muted-foreground text-center">
-                  No blockchain configured — using Supabase storage only
-                </p>
-              )}
-            </form>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Form */}
+        <div className="apple-card p-6">
+          <h2 className="text-[15px] font-semibold text-foreground mb-5">Batch Details</h2>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="batchId" className="text-[13px] font-medium">Batch ID</Label>
+              <Input
+                id="batchId"
+                placeholder="e.g. BATCH-2026-001"
+                value={batchId}
+                onChange={(e) => setBatchId(e.target.value)}
+                required
+                className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px]"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="manufacturer" className="text-[13px] font-medium">Manufacturer Name</Label>
+              <Input
+                id="manufacturer"
+                placeholder="e.g. PharmaCorp"
+                value={manufacturer}
+                onChange={(e) => setManufacturer(e.target.value)}
+                required
+                className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px]"
+              />
+            </div>
+            <Button type="submit" className="w-full h-11 rounded-xl text-[14px] font-medium mt-1" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Register Batch'}
+            </Button>
+            {!isBlockchainConfigured() && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                No blockchain configured - data stored in Supabase
+              </p>
+            )}
+          </form>
+        </div>
 
-        {qrDataUrl && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">QR Code Generated</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
-              <img src={qrDataUrl} alt={`QR for ${lastBatchId}`} className="rounded-lg border" />
-              <p className="text-sm font-medium">{lastBatchId}</p>
-              <Button variant="outline" onClick={downloadQR}>
-                <Download className="h-4 w-4 mr-2" />
-                Download PNG
-              </Button>
-            </CardContent>
-          </Card>
+        {/* QR Result */}
+        {qrDataUrl ? (
+          <div className="apple-card p-6 flex flex-col items-center gap-4 animate-scale-in">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
+              <CheckCircle className="h-5 w-5 text-success" />
+            </div>
+            <h2 className="text-[15px] font-semibold text-foreground">QR Code Ready</h2>
+            <div className="rounded-2xl border border-border/50 overflow-hidden bg-card p-3">
+              <img src={qrDataUrl} alt={`QR code for batch ${lastBatchId}`} className="rounded-lg" />
+            </div>
+            <p className="text-[13px] font-mono font-medium text-muted-foreground">{lastBatchId}</p>
+            <Button variant="outline" onClick={downloadQR} className="rounded-xl h-10 px-5 text-[13px]">
+              <Download className="h-4 w-4 mr-2" />
+              Download PNG
+            </Button>
+          </div>
+        ) : (
+          <div className="apple-card p-6 flex flex-col items-center justify-center text-center min-h-[280px]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted mb-3">
+              <Package className="h-6 w-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-[14px] text-muted-foreground font-medium">No QR code yet</p>
+            <p className="text-[12px] text-muted-foreground/70 mt-1">Register a batch to generate its QR code</p>
+          </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

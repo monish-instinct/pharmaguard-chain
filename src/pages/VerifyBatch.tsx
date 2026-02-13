@@ -1,20 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { verifyBatchOnChain, isBlockchainConfigured } from '@/lib/blockchain';
 import { detectAnomalies } from '@/lib/anomaly';
-import { ScanLine, CheckCircle, AlertTriangle, XCircle, Camera } from 'lucide-react';
+import { ScanLine, CheckCircle, AlertTriangle, XCircle, Camera, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import type { VerificationResult } from '@/types';
 
-const statusConfig: Record<VerificationResult, { icon: React.ElementType; label: string; className: string }> = {
-  authentic: { icon: CheckCircle, label: 'Authentic', className: 'bg-success text-success-foreground' },
-  suspicious: { icon: AlertTriangle, label: 'Suspicious', className: 'bg-warning text-warning-foreground' },
-  not_found: { icon: XCircle, label: 'Not Found', className: 'bg-destructive text-destructive-foreground' },
+const statusConfig: Record<VerificationResult, { icon: React.ElementType; label: string; color: string; bg: string }> = {
+  authentic: { icon: CheckCircle, label: 'Authentic', color: 'text-success', bg: 'bg-success/8 border-success/20' },
+  suspicious: { icon: AlertTriangle, label: 'Suspicious', color: 'text-warning', bg: 'bg-warning/8 border-warning/20' },
+  not_found: { icon: XCircle, label: 'Not Found', color: 'text-destructive', bg: 'bg-destructive/8 border-destructive/20' },
 };
 
 export default function VerifyBatch() {
@@ -44,7 +43,7 @@ export default function VerifyBatch() {
         },
         () => {}
       );
-    } catch (err) {
+    } catch {
       toast.error('Camera access denied or unavailable');
       setScanning(false);
     }
@@ -79,7 +78,6 @@ export default function VerifyBatch() {
     try {
       const loc = await getLocation();
 
-      // Check blockchain first
       if (isBlockchainConfigured()) {
         const chainResult = await verifyBatchOnChain(batchId);
         if (chainResult && !chainResult.exists) {
@@ -89,7 +87,6 @@ export default function VerifyBatch() {
         }
       }
 
-      // Check Supabase
       const { data: batch } = await supabase.from('batches').select('*').eq('batch_id', batchId).maybeSingle();
       if (!batch) {
         setResult('not_found');
@@ -97,7 +94,6 @@ export default function VerifyBatch() {
         return;
       }
 
-      // Run anomaly detection
       const { isSuspicious, flags } = await detectAnomalies(batchId, loc?.lat ?? null, loc?.lng ?? null);
       const status: VerificationResult = isSuspicious ? 'suspicious' : 'authentic';
       setResult(status);
@@ -135,67 +131,81 @@ export default function VerifyBatch() {
   const StatusIcon = result ? statusConfig[result].icon : null;
 
   return (
-    <div className="container max-w-2xl py-8">
-      <h1 className="text-2xl font-bold flex items-center gap-2 mb-6">
-        <ScanLine className="h-6 w-6 text-primary" />
-        Verify Batch
-      </h1>
+    <main className="container max-w-lg py-10 animate-fade-in">
+      <div className="mb-8 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+          <ScanLine className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Verify Batch</h1>
+          <p className="text-[13px] text-muted-foreground">Scan or enter a batch ID to verify authenticity</p>
+        </div>
+      </div>
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Scan QR Code</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div id="qr-reader" ref={scannerRef} className={scanning ? 'rounded-lg overflow-hidden' : 'hidden'} />
-            <div className="flex gap-2">
-              {!scanning ? (
-                <Button onClick={startScanner} className="w-full">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Open Camera Scanner
-                </Button>
-              ) : (
-                <Button variant="destructive" onClick={stopScanner} className="w-full">
-                  Stop Scanner
-                </Button>
-              )}
+      <div className="flex flex-col gap-4">
+        {/* Scanner Card */}
+        <div className="apple-card p-6">
+          <div id="qr-reader" ref={scannerRef} className={scanning ? 'rounded-xl overflow-hidden mb-4' : 'hidden'} />
+          
+          {!scanning ? (
+            <Button onClick={startScanner} className="w-full h-12 rounded-xl text-[14px] font-medium">
+              <Camera className="h-4 w-4 mr-2" />
+              Open Camera Scanner
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={stopScanner} className="w-full h-12 rounded-xl text-[14px] font-medium border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive">
+              Stop Scanner
+            </Button>
+          )}
+
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border/50" />
             </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">or enter manually</span>
-              </div>
+            <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
+              <span className="bg-card px-3 text-muted-foreground font-medium">or enter manually</span>
             </div>
+          </div>
 
-            <form onSubmit={handleManualVerify} className="flex gap-2">
-              <Input placeholder="Enter Batch ID" value={manualId} onChange={(e) => setManualId(e.target.value)} />
-              <Button type="submit" disabled={loading}>Verify</Button>
-            </form>
-          </CardContent>
-        </Card>
+          <form onSubmit={handleManualVerify} className="flex gap-2">
+            <Input
+              placeholder="Enter Batch ID"
+              value={manualId}
+              onChange={(e) => setManualId(e.target.value)}
+              className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px] flex-1"
+            />
+            <Button type="submit" disabled={loading} className="h-11 rounded-xl px-5">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              <span className="sr-only">Verify</span>
+            </Button>
+          </form>
+        </div>
 
+        {/* Result Card */}
         {result && StatusIcon && (
-          <Card className="border-2" style={{ borderColor: result === 'authentic' ? 'hsl(var(--success))' : result === 'suspicious' ? 'hsl(var(--warning))' : 'hsl(var(--destructive))' }}>
-            <CardContent className="flex flex-col items-center py-8 gap-4">
-              <StatusIcon className="h-16 w-16" style={{ color: result === 'authentic' ? 'hsl(var(--success))' : result === 'suspicious' ? 'hsl(var(--warning))' : 'hsl(var(--destructive))' }} />
-              <Badge className={`text-lg px-4 py-2 ${statusConfig[result].className}`}>
-                {statusConfig[result].label}
-              </Badge>
-              <p className="font-mono text-sm text-muted-foreground">{scannedId}</p>
-              {anomalyFlags.length > 0 && (
-                <div className="w-full mt-2 space-y-1">
-                  {anomalyFlags.map((flag, i) => (
-                    <div key={i} className="text-sm text-warning bg-warning/10 rounded px-3 py-1.5">
-                      ⚠️ {flag}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className={`apple-card border-2 p-8 flex flex-col items-center gap-4 animate-scale-in ${statusConfig[result].bg}`}>
+            <StatusIcon className={`h-14 w-14 ${statusConfig[result].color}`} />
+            <Badge className={`text-[14px] px-4 py-1.5 rounded-full font-semibold ${
+              result === 'authentic' ? 'bg-success text-success-foreground' :
+              result === 'suspicious' ? 'bg-warning text-warning-foreground' :
+              'bg-destructive text-destructive-foreground'
+            }`}>
+              {statusConfig[result].label}
+            </Badge>
+            <p className="font-mono text-[13px] text-muted-foreground">{scannedId}</p>
+            {anomalyFlags.length > 0 && (
+              <div className="w-full mt-1 flex flex-col gap-1.5">
+                {anomalyFlags.map((flag, i) => (
+                  <div key={i} className="text-[13px] text-warning bg-warning/10 rounded-xl px-4 py-2.5 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>{flag}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

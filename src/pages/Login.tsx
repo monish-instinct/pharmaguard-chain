@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield } from 'lucide-react';
+import { Shield, ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppRole } from '@/types';
 
@@ -53,38 +52,66 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Shield className="h-6 w-6 text-primary" />
+    <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4">
+      <div className="w-full max-w-sm animate-scale-in">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary apple-shadow">
+            <Shield className="h-7 w-7 text-primary-foreground" />
           </div>
-          <CardTitle>{isSignUp ? 'Create Account' : 'Sign In'}</CardTitle>
-          <CardDescription>
-            {isSignUp ? 'Register for PharmaShield' : 'Welcome back to PharmaShield'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          </h1>
+          <p className="mt-1.5 text-[13px] text-muted-foreground">
+            {isSignUp ? 'Register for PharmaShield' : 'Sign in to PharmaShield'}
+          </p>
+        </div>
+
+        {/* Form Card */}
+        <div className="apple-card p-6">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Display Name</Label>
-                <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="name" className="text-[13px] font-medium">Display Name</Label>
+                <Input
+                  id="name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  required
+                  className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px] placeholder:text-muted-foreground/60"
+                  placeholder="Your name"
+                />
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email" className="text-[13px] font-medium">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px] placeholder:text-muted-foreground/60"
+                placeholder="you@example.com"
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password" className="text-[13px] font-medium">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px] placeholder:text-muted-foreground/60"
+                placeholder="Enter password"
+              />
             </div>
             {isSignUp && (
-              <div className="space-y-2">
-                <Label>Role</Label>
+              <div className="flex flex-col gap-2">
+                <Label className="text-[13px] font-medium">Role</Label>
                 <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -95,15 +122,34 @@ export default function Login() {
                 </Select>
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
-            </Button>
-            <Button type="button" variant="link" className="w-full" onClick={() => setIsSignUp(!isSignUp)}>
-              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 rounded-xl text-[14px] font-medium mt-1"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  {isSignUp ? 'Create Account' : 'Sign In'}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
+              )}
             </Button>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        {/* Toggle */}
+        <div className="text-center mt-5">
+          <button
+            type="button"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-[13px] text-primary font-medium hover:underline"
+          >
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+          </button>
+        </div>
+      </div>
+    </main>
   );
 }
