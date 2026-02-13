@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { connectWallet, signMessage, getNonce, shortenAddress, type WalletType } from '@/lib/wallet';
+import { connectWallet, signMessage, getNonce, shortenAddress } from '@/lib/wallet';
 import { toast } from 'sonner';
 import type { AppRole, UserProfile } from '@/types';
 
@@ -18,7 +18,7 @@ interface AuthContextType {
   setDemoMode: (v: boolean) => void;
   setDemoRole: (r: AppRole) => void;
   activeRole: AppRole | null;
-  connectWithWallet: (wallet: WalletType) => Promise<void>;
+  connectWithWallet: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -77,14 +77,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data) setRoles(data.map((r: any) => r.role as AppRole));
   };
 
-  const connectWithWallet = async (wallet: WalletType) => {
+  const connectWithWallet = async () => {
     setWalletConnecting(true);
     try {
-      const address = await connectWallet(wallet);
+      const address = await connectWallet();
       if (!address) throw new Error('Failed to connect wallet. Is MetaMask installed?');
 
       const nonce = getNonce();
-      const signature = await signMessage(wallet, nonce);
+      const signature = await signMessage(nonce);
       if (!signature) throw new Error('Signature rejected');
 
       const { data, error } = await supabase.functions.invoke('wallet-auth', {

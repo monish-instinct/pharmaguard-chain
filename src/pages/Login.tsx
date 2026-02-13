@@ -33,7 +33,7 @@ export default function Login() {
   }, [loading, isConnected, hasRole, roles, navigate]);
 
   const handleConnect = async () => {
-    await connectWithWallet('metamask');
+    await connectWithWallet();
   };
 
   const handleSaveRole = async () => {
