@@ -36,11 +36,11 @@ export function Navbar() {
   const navItems = activeRole ? roleNavItems[activeRole] : [];
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-border/50">
+    <header className="sticky top-0 z-50 glass border-b border-[rgba(255,255,255,0.06)]">
       <div className="container flex h-14 items-center gap-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+        <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary glow-primary transition-all duration-300 group-hover:scale-105">
             <Shield className="h-4 w-4 text-primary-foreground" />
           </div>
           <span className="font-semibold text-[15px] tracking-tight text-foreground">PharmaShield</span>
@@ -55,8 +55,8 @@ export function Navbar() {
                 <button
                   className={`px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-foreground/[0.06] text-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04]'
+                      ? 'bg-[rgba(255,255,255,0.08)] text-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.04)]'
                   }`}
                 >
                   {item.label}
@@ -70,10 +70,10 @@ export function Navbar() {
         <div className="ml-auto flex items-center gap-2">
           {/* Demo Mode Pill */}
           {demoMode && (
-            <div className="hidden md:flex items-center gap-2 rounded-full border border-warning/30 bg-warning/8 px-3 py-1">
+            <div className="hidden md:flex items-center gap-2 rounded-full border border-warning/20 bg-warning/8 px-3 py-1">
               <FlaskConical className="h-3.5 w-3.5 text-warning" />
               <Select value={demoRole} onValueChange={(v) => setDemoRole(v as AppRole)}>
-                <SelectTrigger className="h-6 w-[110px] text-xs border-0 bg-transparent p-0 shadow-none focus:ring-0">
+                <SelectTrigger className="h-6 w-[110px] text-xs border-0 bg-transparent p-0 shadow-none focus:ring-0 text-warning">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -89,7 +89,7 @@ export function Navbar() {
           {activeRole && (
             <Badge
               variant="secondary"
-              className="hidden md:inline-flex text-[11px] font-medium px-2.5 py-0.5 rounded-full"
+              className="hidden md:inline-flex text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[rgba(255,255,255,0.06)] text-muted-foreground border-[rgba(255,255,255,0.08)]"
             >
               {roleLabels[activeRole]}
             </Badge>
@@ -100,7 +100,7 @@ export function Navbar() {
             variant="ghost"
             size="sm"
             onClick={() => setDemoMode(!demoMode)}
-            className="hidden md:inline-flex h-8 px-3 text-xs rounded-lg text-muted-foreground hover:text-foreground"
+            className="hidden md:inline-flex h-8 px-3 text-xs rounded-lg text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)]"
           >
             <FlaskConical className="h-3.5 w-3.5 mr-1.5" />
             {demoMode ? 'Exit Demo' : 'Demo'}
@@ -108,7 +108,7 @@ export function Navbar() {
 
           {/* Settings */}
           <Link to="/settings" className="hidden md:inline-flex">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)]">
               <Settings className="h-4 w-4" />
               <span className="sr-only">Settings</span>
             </Button>
@@ -120,7 +120,7 @@ export function Navbar() {
               variant="ghost"
               size="icon"
               onClick={signOut}
-              className="hidden md:inline-flex h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+              className="hidden md:inline-flex h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)]"
             >
               <LogOut className="h-4 w-4" />
               <span className="sr-only">Sign out</span>
@@ -137,7 +137,7 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-8 w-8 rounded-lg"
+            className="md:hidden h-8 w-8 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.06)]"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -148,29 +148,29 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-border/50 glass animate-fade-in">
+        <div className="md:hidden border-t border-[rgba(255,255,255,0.06)] glass animate-fade-in">
           <div className="container py-3 flex flex-col gap-1">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}>
                   <div className={`px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
-                    isActive ? 'bg-primary/8 text-primary' : 'text-foreground'
+                    isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-[rgba(255,255,255,0.04)]'
                   }`}>
                     {item.label}
                   </div>
                 </Link>
               );
             })}
-            <div className="h-px bg-border/50 my-1" />
+            <div className="h-px bg-[rgba(255,255,255,0.06)] my-1" />
             <button
               onClick={() => { setDemoMode(!demoMode); setMobileOpen(false); }}
-              className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground text-left"
+              className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground text-left hover:bg-[rgba(255,255,255,0.04)]"
             >
               {demoMode ? 'Exit Demo Mode' : 'Enable Demo Mode'}
             </button>
             <Link to="/settings" onClick={() => setMobileOpen(false)}>
-              <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground">
+              <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground hover:bg-[rgba(255,255,255,0.04)]">
                 Settings
               </div>
             </Link>

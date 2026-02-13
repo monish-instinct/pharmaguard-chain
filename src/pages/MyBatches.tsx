@@ -22,7 +22,11 @@ export default function MyBatches() {
         setBatches(data as Batch[]);
         const urls: Record<string, string> = {};
         for (const b of data) {
-          urls[b.batch_id] = await QRCode.toDataURL(b.batch_id, { width: 80, margin: 1 });
+          urls[b.batch_id] = await QRCode.toDataURL(b.batch_id, {
+            width: 80,
+            margin: 1,
+            color: { dark: '#ffffffcc', light: '#00000000' },
+          });
         }
         setQrUrls(urls);
       }
@@ -33,7 +37,7 @@ export default function MyBatches() {
   return (
     <main className="container py-10 animate-fade-in">
       <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 glow-primary">
           <Boxes className="h-5 w-5 text-primary" />
         </div>
         <div>
@@ -48,18 +52,18 @@ export default function MyBatches() {
 
       {batches.length === 0 ? (
         <div className="apple-card flex flex-col items-center justify-center py-16 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted mb-4">
-            <Package className="h-7 w-7 text-muted-foreground/50" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[rgba(255,255,255,0.04)] mb-4">
+            <Package className="h-7 w-7 text-muted-foreground/40" />
           </div>
           <p className="text-[15px] font-medium text-muted-foreground">No batches registered yet</p>
-          <p className="text-[13px] text-muted-foreground/70 mt-1">Batches will appear here once registered</p>
+          <p className="text-[13px] text-muted-foreground/60 mt-1">Batches will appear here once registered</p>
         </div>
       ) : (
         <div className="apple-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border/50">
+                <tr className="border-b border-[rgba(255,255,255,0.06)]">
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">QR</th>
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch ID</th>
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Manufacturer</th>
@@ -69,7 +73,7 @@ export default function MyBatches() {
               </thead>
               <tbody>
                 {batches.map((batch) => (
-                  <tr key={batch.id} className="border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr key={batch.id} className="border-b border-[rgba(255,255,255,0.04)] last:border-0 hover:bg-[rgba(255,255,255,0.02)] transition-colors">
                     <td className="px-6 py-3">
                       {qrUrls[batch.batch_id] && (
                         <img src={qrUrls[batch.batch_id]} alt={`QR for ${batch.batch_id}`} className="h-10 w-10 rounded-lg" />
@@ -84,7 +88,7 @@ export default function MyBatches() {
                           On-chain
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[11px] font-medium rounded-full px-2.5 py-0.5">
+                        <Badge variant="outline" className="text-[11px] font-medium rounded-full px-2.5 py-0.5 border-[rgba(255,255,255,0.1)] text-muted-foreground">
                           Off-chain
                         </Badge>
                       )}

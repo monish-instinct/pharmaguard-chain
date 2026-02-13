@@ -10,10 +10,10 @@ import { ScanLine, CheckCircle, AlertTriangle, XCircle, Camera, Loader2, Search 
 import { toast } from 'sonner';
 import type { VerificationResult } from '@/types';
 
-const statusConfig: Record<VerificationResult, { icon: React.ElementType; label: string; color: string; bg: string }> = {
-  authentic: { icon: CheckCircle, label: 'Authentic', color: 'text-success', bg: 'bg-success/8 border-success/20' },
-  suspicious: { icon: AlertTriangle, label: 'Suspicious', color: 'text-warning', bg: 'bg-warning/8 border-warning/20' },
-  not_found: { icon: XCircle, label: 'Not Found', color: 'text-destructive', bg: 'bg-destructive/8 border-destructive/20' },
+const statusConfig: Record<VerificationResult, { icon: React.ElementType; label: string; color: string; bg: string; glow: string }> = {
+  authentic: { icon: CheckCircle, label: 'Authentic', color: 'text-success', bg: 'bg-success/5 border-success/20', glow: 'glow-success' },
+  suspicious: { icon: AlertTriangle, label: 'Suspicious', color: 'text-warning', bg: 'bg-warning/5 border-warning/20', glow: 'glow-warning' },
+  not_found: { icon: XCircle, label: 'Not Found', color: 'text-destructive', bg: 'bg-destructive/5 border-destructive/20', glow: 'glow-destructive' },
 };
 
 export default function VerifyBatch() {
@@ -133,7 +133,7 @@ export default function VerifyBatch() {
   return (
     <main className="container max-w-lg py-10 animate-fade-in">
       <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 glow-primary">
           <ScanLine className="h-5 w-5 text-primary" />
         </div>
         <div>
@@ -148,7 +148,7 @@ export default function VerifyBatch() {
           <div id="qr-reader" ref={scannerRef} className={scanning ? 'rounded-xl overflow-hidden mb-4' : 'hidden'} />
           
           {!scanning ? (
-            <Button onClick={startScanner} className="w-full h-12 rounded-xl text-[14px] font-medium">
+            <Button onClick={startScanner} className="w-full h-12 rounded-xl text-[14px] font-medium glow-primary">
               <Camera className="h-4 w-4 mr-2" />
               Open Camera Scanner
             </Button>
@@ -160,7 +160,7 @@ export default function VerifyBatch() {
 
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border/50" />
+              <span className="w-full border-t border-[rgba(255,255,255,0.06)]" />
             </div>
             <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
               <span className="bg-card px-3 text-muted-foreground font-medium">or enter manually</span>
@@ -172,7 +172,7 @@ export default function VerifyBatch() {
               placeholder="Enter Batch ID"
               value={manualId}
               onChange={(e) => setManualId(e.target.value)}
-              className="h-11 rounded-xl bg-secondary/50 border-border/50 text-[14px] flex-1"
+              className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 flex-1 focus:border-primary/40"
             />
             <Button type="submit" disabled={loading} className="h-11 rounded-xl px-5">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -183,7 +183,7 @@ export default function VerifyBatch() {
 
         {/* Result Card */}
         {result && StatusIcon && (
-          <div className={`apple-card border-2 p-8 flex flex-col items-center gap-4 animate-scale-in ${statusConfig[result].bg}`}>
+          <div className={`apple-card border-2 p-8 flex flex-col items-center gap-4 animate-scale-in ${statusConfig[result].bg} ${statusConfig[result].glow}`}>
             <StatusIcon className={`h-14 w-14 ${statusConfig[result].color}`} />
             <Badge className={`text-[14px] px-4 py-1.5 rounded-full font-semibold ${
               result === 'authentic' ? 'bg-success text-success-foreground' :
@@ -196,7 +196,7 @@ export default function VerifyBatch() {
             {anomalyFlags.length > 0 && (
               <div className="w-full mt-1 flex flex-col gap-1.5">
                 {anomalyFlags.map((flag, i) => (
-                  <div key={i} className="text-[13px] text-warning bg-warning/10 rounded-xl px-4 py-2.5 flex items-start gap-2">
+                  <div key={i} className="text-[13px] text-warning bg-warning/8 border border-warning/15 rounded-xl px-4 py-2.5 flex items-start gap-2">
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>{flag}</span>
                   </div>
