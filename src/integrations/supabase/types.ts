@@ -52,6 +52,7 @@ export type Database = {
           organization: string | null
           updated_at: string
           user_id: string
+          wallet_address: string | null
         }
         Insert: {
           created_at?: string
@@ -60,6 +61,7 @@ export type Database = {
           organization?: string | null
           updated_at?: string
           user_id: string
+          wallet_address?: string | null
         }
         Update: {
           created_at?: string
@@ -68,6 +70,7 @@ export type Database = {
           organization?: string | null
           updated_at?: string
           user_id?: string
+          wallet_address?: string | null
         }
         Relationships: []
       }

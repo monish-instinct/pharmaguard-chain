@@ -38,7 +38,7 @@ export default function ScanLogs() {
           </div>
         </div>
         <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-[140px] h-9 rounded-lg text-[13px] bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-foreground">
+          <SelectTrigger className="w-[140px] h-9 rounded-lg text-[13px]">
             <SelectValue placeholder="Filter" />
           </SelectTrigger>
           <SelectContent>
@@ -54,7 +54,7 @@ export default function ScanLogs() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[rgba(255,255,255,0.06)]">
+              <tr className="border-b border-border">
                 <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch ID</th>
                 <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Location</th>
@@ -67,7 +67,7 @@ export default function ScanLogs() {
                 <tr>
                   <td colSpan={5} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(255,255,255,0.04)]">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent">
                         <ClipboardList className="h-6 w-6 text-muted-foreground/40" />
                       </div>
                       <p className="text-[14px] text-muted-foreground font-medium">No scan logs found</p>
@@ -78,8 +78,8 @@ export default function ScanLogs() {
                 logs.map((log) => (
                   <tr
                     key={log.id}
-                    className={`border-b border-[rgba(255,255,255,0.04)] last:border-0 transition-colors hover:bg-[rgba(255,255,255,0.02)] ${
-                      log.verification_status === 'suspicious' ? 'bg-warning/[0.02]' : ''
+                    className={`border-b border-border/50 last:border-0 transition-colors hover:bg-accent/50 ${
+                      log.verification_status === 'suspicious' ? 'bg-warning/[0.03]' : ''
                     }`}
                   >
                     <td className="px-6 py-3.5 text-[13px] font-mono font-medium text-foreground">{log.batch_id}</td>

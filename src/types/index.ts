@@ -5,6 +5,7 @@ export interface UserProfile {
   user_id: string;
   display_name: string | null;
   organization: string | null;
+  wallet_address: string | null;
 }
 
 export interface Batch {

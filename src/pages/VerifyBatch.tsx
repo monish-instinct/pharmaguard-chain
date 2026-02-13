@@ -143,7 +143,6 @@ export default function VerifyBatch() {
       </div>
 
       <div className="flex flex-col gap-4">
-        {/* Scanner Card */}
         <div className="apple-card p-6">
           <div id="qr-reader" ref={scannerRef} className={scanning ? 'rounded-xl overflow-hidden mb-4' : 'hidden'} />
           
@@ -160,7 +159,7 @@ export default function VerifyBatch() {
 
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-[rgba(255,255,255,0.06)]" />
+              <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
               <span className="bg-card px-3 text-muted-foreground font-medium">or enter manually</span>
@@ -172,16 +171,14 @@ export default function VerifyBatch() {
               placeholder="Enter Batch ID"
               value={manualId}
               onChange={(e) => setManualId(e.target.value)}
-              className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 flex-1 focus:border-primary/40"
+              className="h-11 rounded-xl text-[14px] flex-1"
             />
             <Button type="submit" disabled={loading} className="h-11 rounded-xl px-5">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              <span className="sr-only">Verify</span>
             </Button>
           </form>
         </div>
 
-        {/* Result Card */}
         {result && StatusIcon && (
           <div className={`apple-card border-2 p-8 flex flex-col items-center gap-4 animate-scale-in ${statusConfig[result].bg} ${statusConfig[result].glow}`}>
             <StatusIcon className={`h-14 w-14 ${statusConfig[result].color}`} />
@@ -196,7 +193,7 @@ export default function VerifyBatch() {
             {anomalyFlags.length > 0 && (
               <div className="w-full mt-1 flex flex-col gap-1.5">
                 {anomalyFlags.map((flag, i) => (
-                  <div key={i} className="text-[13px] text-warning bg-warning/8 border border-warning/15 rounded-xl px-4 py-2.5 flex items-start gap-2">
+                  <div key={i} className="text-[13px] text-warning bg-warning/5 border border-warning/15 rounded-xl px-4 py-2.5 flex items-start gap-2">
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>{flag}</span>
                   </div>

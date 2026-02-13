@@ -1,72 +1,49 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, ArrowRight, Loader2 } from 'lucide-react';
+import { Shield, Wallet, Loader2, CheckCircle } from 'lucide-react';
+import { isMetaMaskAvailable, isPhantomAvailable, shortenAddress } from '@/lib/wallet';
 import { toast } from 'sonner';
 import type { AppRole } from '@/types';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [role, setRole] = useState<AppRole>('manufacturer');
-  const [loading, setLoading] = useState(false);
+  const { connectWithWallet, walletConnecting, walletAddress, user, roles } = useAuth();
+  const [selectedRole, setSelectedRole] = useState<AppRole>('manufacturer');
+  const [savingRole, setSavingRole] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const isConnected = !!walletAddress && !!user;
+  const hasRole = roles.length > 0;
 
+  const handleConnect = async (wallet: 'metamask' | 'phantom') => {
+    await connectWithWallet(wallet);
+  };
+
+  const handleSaveRole = async () => {
+    if (!user) return;
+    setSavingRole(true);
     try {
-      if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { display_name: displayName },
-          },
-        });
-        if (error) throw error;
-
-        if (data.user) {
-          await supabase.from('user_roles').insert({ user_id: data.user.id, role });
-
-          if (data.session) {
-            toast.success('Account created! You are now signed in.');
-            navigate('/');
-            return;
-          }
-
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (!signInError) {
-            toast.success('Account created! You are now signed in.');
-            navigate('/');
-          } else {
-            toast.success('Account created! Please sign in below.');
-            setIsSignUp(false);
-          }
-        }
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success('Signed in successfully');
-        navigate('/');
-      }
+      const { error } = await supabase.from('user_roles').insert({
+        user_id: user.id,
+        role: selectedRole,
+      });
+      if (error) throw error;
+      toast.success('Role assigned! Redirecting...');
+      setTimeout(() => navigate('/'), 600);
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || 'Failed to assign role');
     } finally {
-      setLoading(false);
+      setSavingRole(false);
     }
   };
+
+  if (isConnected && hasRole) {
+    navigate('/');
+    return null;
+  }
 
   return (
     <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4 relative">
@@ -80,59 +57,64 @@ export default function Login() {
             <Shield className="h-7 w-7 text-primary-foreground" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+            {isConnected ? 'Select Your Role' : 'Connect Wallet'}
           </h1>
           <p className="mt-1.5 text-[13px] text-muted-foreground">
-            {isSignUp ? 'Register for PharmaShield' : 'Sign in to PharmaShield'}
+            {isConnected
+              ? "Choose how you'll use PharmaShield"
+              : 'Sign in with your Web3 wallet'}
           </p>
         </div>
 
-        {/* Form Card */}
+        {/* Connect / Role Card */}
         <div className="apple-card p-6">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {isSignUp && (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="name" className="text-[13px] font-medium text-foreground">Display Name</Label>
-                <Input
-                  id="name"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  required
-                  className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:ring-primary/20"
-                  placeholder="Your name"
-                />
+          {!isConnected ? (
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={() => handleConnect('metamask')}
+                disabled={walletConnecting || !isMetaMaskAvailable()}
+                className="w-full h-12 rounded-xl text-[14px] font-medium glow-primary justify-start gap-3 px-5"
+              >
+                {walletConnecting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Wallet className="h-5 w-5" />
+                )}
+                {isMetaMaskAvailable() ? 'Connect MetaMask' : 'MetaMask Not Detected'}
+              </Button>
+
+              <Button
+                onClick={() => handleConnect('phantom')}
+                disabled={walletConnecting || !isPhantomAvailable()}
+                variant="outline"
+                className="w-full h-12 rounded-xl text-[14px] font-medium justify-start gap-3 px-5 border-border hover:bg-accent"
+              >
+                <Wallet className="h-5 w-5" />
+                {isPhantomAvailable() ? 'Connect Phantom' : 'Phantom Not Detected'}
+              </Button>
+
+              {!isMetaMaskAvailable() && !isPhantomAvailable() && (
+                <p className="text-[12px] text-muted-foreground text-center mt-2">
+                  No wallet detected. Install MetaMask or Phantom to continue.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {/* Connected wallet */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-success/5 border border-success/20">
+                <CheckCircle className="h-5 w-5 text-success shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-foreground">Wallet Connected</p>
+                  <p className="text-[12px] font-mono text-muted-foreground">{shortenAddress(walletAddress)}</p>
+                </div>
               </div>
-            )}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="email" className="text-[13px] font-medium text-foreground">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:ring-primary/20"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="password" className="text-[13px] font-medium text-foreground">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40 focus:ring-primary/20"
-                placeholder="Min. 6 characters"
-              />
-            </div>
-            {isSignUp && (
+
+              {/* Role selection */}
               <div className="flex flex-col gap-2">
-                <Label className="text-[13px] font-medium text-foreground">Role</Label>
-                <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-                  <SelectTrigger className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[14px] text-foreground">
+                <label className="text-[13px] font-medium text-foreground">Your Role</label>
+                <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
+                  <SelectTrigger className="h-11 rounded-xl text-[14px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -142,33 +124,16 @@ export default function Login() {
                   </SelectContent>
                 </Select>
               </div>
-            )}
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 rounded-xl text-[14px] font-medium mt-1 glow-primary"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  {isSignUp ? 'Create Account' : 'Sign In'}
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </form>
-        </div>
 
-        {/* Toggle */}
-        <div className="text-center mt-5">
-          <button
-            type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-[13px] text-primary font-medium hover:underline"
-          >
-            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-          </button>
+              <Button
+                onClick={handleSaveRole}
+                disabled={savingRole}
+                className="w-full h-11 rounded-xl text-[14px] font-medium glow-primary"
+              >
+                {savingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue'}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </main>

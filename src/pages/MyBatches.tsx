@@ -25,7 +25,7 @@ export default function MyBatches() {
           urls[b.batch_id] = await QRCode.toDataURL(b.batch_id, {
             width: 80,
             margin: 1,
-            color: { dark: '#ffffffcc', light: '#00000000' },
+            color: { dark: '#1a1a1a', light: '#ffffff00' },
           });
         }
         setQrUrls(urls);
@@ -52,7 +52,7 @@ export default function MyBatches() {
 
       {batches.length === 0 ? (
         <div className="apple-card flex flex-col items-center justify-center py-16 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[rgba(255,255,255,0.04)] mb-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent mb-4">
             <Package className="h-7 w-7 text-muted-foreground/40" />
           </div>
           <p className="text-[15px] font-medium text-muted-foreground">No batches registered yet</p>
@@ -63,7 +63,7 @@ export default function MyBatches() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[rgba(255,255,255,0.06)]">
+                <tr className="border-b border-border">
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">QR</th>
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch ID</th>
                   <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Manufacturer</th>
@@ -73,7 +73,7 @@ export default function MyBatches() {
               </thead>
               <tbody>
                 {batches.map((batch) => (
-                  <tr key={batch.id} className="border-b border-[rgba(255,255,255,0.04)] last:border-0 hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                  <tr key={batch.id} className="border-b border-border/50 last:border-0 hover:bg-accent/50 transition-colors">
                     <td className="px-6 py-3">
                       {qrUrls[batch.batch_id] && (
                         <img src={qrUrls[batch.batch_id]} alt={`QR for ${batch.batch_id}`} className="h-10 w-10 rounded-lg" />
@@ -83,12 +83,12 @@ export default function MyBatches() {
                     <td className="px-6 py-3 text-[13px] text-foreground">{batch.manufacturer_name}</td>
                     <td className="px-6 py-3">
                       {batch.blockchain_tx_hash ? (
-                        <Badge variant="outline" className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-primary/8 text-primary border-primary/20">
+                        <Badge variant="outline" className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-primary/5 text-primary border-primary/20">
                           <ExternalLink className="h-3 w-3 mr-1" />
                           On-chain
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[11px] font-medium rounded-full px-2.5 py-0.5 border-[rgba(255,255,255,0.1)] text-muted-foreground">
+                        <Badge variant="outline" className="text-[11px] font-medium rounded-full px-2.5 py-0.5 border-border text-muted-foreground">
                           Off-chain
                         </Badge>
                       )}

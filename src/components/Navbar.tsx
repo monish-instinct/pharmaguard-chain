@@ -3,8 +3,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, LogOut, FlaskConical, Settings, Menu, X } from 'lucide-react';
+import { Shield, LogOut, FlaskConical, Settings, Menu, X, Wallet } from 'lucide-react';
 import { useState } from 'react';
+import { shortenAddress } from '@/lib/wallet';
 import type { AppRole } from '@/types';
 
 const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
@@ -29,14 +30,14 @@ const roleLabels: Record<AppRole, string> = {
 };
 
 export function Navbar() {
-  const { activeRole, demoMode, demoRole, setDemoMode, setDemoRole, user, signOut } = useAuth();
+  const { activeRole, demoMode, demoRole, setDemoMode, setDemoRole, user, walletAddress, signOut } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = activeRole ? roleNavItems[activeRole] : [];
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-[rgba(255,255,255,0.06)]">
+    <header className="sticky top-0 z-50 glass border-b border-border">
       <div className="container flex h-14 items-center gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
@@ -47,7 +48,7 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-0.5 ml-6" role="navigation" aria-label="Main navigation">
+        <nav className="hidden md:flex items-center gap-0.5 ml-6">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -55,8 +56,8 @@ export function Navbar() {
                 <button
                   className={`px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-[rgba(255,255,255,0.08)] text-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.04)]'
+                      ? 'bg-accent text-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   }`}
                 >
                   {item.label}
@@ -70,7 +71,7 @@ export function Navbar() {
         <div className="ml-auto flex items-center gap-2">
           {/* Demo Mode Pill */}
           {demoMode && (
-            <div className="hidden md:flex items-center gap-2 rounded-full border border-warning/20 bg-warning/8 px-3 py-1">
+            <div className="hidden md:flex items-center gap-2 rounded-full border border-warning/20 bg-warning/5 px-3 py-1">
               <FlaskConical className="h-3.5 w-3.5 text-warning" />
               <Select value={demoRole} onValueChange={(v) => setDemoRole(v as AppRole)}>
                 <SelectTrigger className="h-6 w-[110px] text-xs border-0 bg-transparent p-0 shadow-none focus:ring-0 text-warning">
@@ -85,11 +86,22 @@ export function Navbar() {
             </div>
           )}
 
+          {/* Wallet Address */}
+          {walletAddress && (
+            <Badge
+              variant="secondary"
+              className="hidden md:inline-flex text-[11px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-accent text-muted-foreground border-border"
+            >
+              <Wallet className="h-3 w-3 mr-1" />
+              {shortenAddress(walletAddress)}
+            </Badge>
+          )}
+
           {/* Role Badge */}
           {activeRole && (
             <Badge
               variant="secondary"
-              className="hidden md:inline-flex text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[rgba(255,255,255,0.06)] text-muted-foreground border-[rgba(255,255,255,0.08)]"
+              className="hidden md:inline-flex text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-accent text-muted-foreground border-border"
             >
               {roleLabels[activeRole]}
             </Badge>
@@ -100,7 +112,7 @@ export function Navbar() {
             variant="ghost"
             size="sm"
             onClick={() => setDemoMode(!demoMode)}
-            className="hidden md:inline-flex h-8 px-3 text-xs rounded-lg text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)]"
+            className="hidden md:inline-flex h-8 px-3 text-xs rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
           >
             <FlaskConical className="h-3.5 w-3.5 mr-1.5" />
             {demoMode ? 'Exit Demo' : 'Demo'}
@@ -108,9 +120,8 @@ export function Navbar() {
 
           {/* Settings */}
           <Link to="/settings" className="hidden md:inline-flex">
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)]">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent">
               <Settings className="h-4 w-4" />
-              <span className="sr-only">Settings</span>
             </Button>
           </Link>
 
@@ -120,15 +131,14 @@ export function Navbar() {
               variant="ghost"
               size="icon"
               onClick={signOut}
-              className="hidden md:inline-flex h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)]"
+              className="hidden md:inline-flex h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               <LogOut className="h-4 w-4" />
-              <span className="sr-only">Sign out</span>
             </Button>
           ) : (
             <Link to="/login" className="hidden md:inline-flex">
               <Button size="sm" className="h-8 px-4 text-xs rounded-full font-medium">
-                Sign In
+                Connect Wallet
               </Button>
             </Link>
           )}
@@ -137,9 +147,8 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-8 w-8 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.06)]"
+            className="md:hidden h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent"
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
           >
             {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
@@ -148,40 +157,40 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-[rgba(255,255,255,0.06)] glass animate-fade-in">
+        <div className="md:hidden border-t border-border glass animate-fade-in">
           <div className="container py-3 flex flex-col gap-1">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}>
                   <div className={`px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
-                    isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-[rgba(255,255,255,0.04)]'
+                    isActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent'
                   }`}>
                     {item.label}
                   </div>
                 </Link>
               );
             })}
-            <div className="h-px bg-[rgba(255,255,255,0.06)] my-1" />
+            <div className="h-px bg-border my-1" />
             <button
               onClick={() => { setDemoMode(!demoMode); setMobileOpen(false); }}
-              className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground text-left hover:bg-[rgba(255,255,255,0.04)]"
+              className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground text-left hover:bg-accent"
             >
               {demoMode ? 'Exit Demo Mode' : 'Enable Demo Mode'}
             </button>
             <Link to="/settings" onClick={() => setMobileOpen(false)}>
-              <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground hover:bg-[rgba(255,255,255,0.04)]">
+              <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground hover:bg-accent">
                 Settings
               </div>
             </Link>
             {user ? (
               <button onClick={() => { signOut(); setMobileOpen(false); }} className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-destructive text-left">
-                Sign Out
+                Disconnect Wallet
               </button>
             ) : (
               <Link to="/login" onClick={() => setMobileOpen(false)}>
                 <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-primary">
-                  Sign In
+                  Connect Wallet
                 </div>
               </Link>
             )}

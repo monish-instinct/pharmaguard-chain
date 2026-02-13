@@ -5,11 +5,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { getContractAddress, setContractAddress, isBlockchainConfigured } from '@/lib/blockchain';
-import { Settings2, Link as LinkIcon, FlaskConical, CheckCircle, AlertCircle } from 'lucide-react';
+import { shortenAddress } from '@/lib/wallet';
+import { Settings2, Link as LinkIcon, FlaskConical, CheckCircle, AlertCircle, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Settings() {
-  const { demoMode, setDemoMode } = useAuth();
+  const { demoMode, setDemoMode, walletAddress } = useAuth();
   const [address, setAddress] = useState(getContractAddress() || '');
 
   const saveContract = () => {
@@ -32,6 +33,22 @@ export default function Settings() {
       </div>
 
       <div className="flex flex-col gap-4">
+        {/* Wallet Info */}
+        {walletAddress && (
+          <div className="apple-card p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 glow-primary">
+                <Wallet className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-[15px] font-semibold text-foreground">Connected Wallet</h2>
+                <p className="text-[13px] font-mono text-muted-foreground mt-1">{walletAddress}</p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">{shortenAddress(walletAddress)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Demo Mode */}
         <div className="apple-card p-6">
           <div className="flex items-start gap-4">
@@ -41,15 +58,10 @@ export default function Settings() {
             <div className="flex-1 min-w-0">
               <h2 className="text-[15px] font-semibold text-foreground">Demo Mode</h2>
               <p className="text-[13px] text-muted-foreground mt-0.5 leading-relaxed">
-                Quickly switch between roles without authentication. Perfect for testing all features.
+                Quickly switch between roles without wallet authentication. Perfect for testing.
               </p>
             </div>
-            <Switch
-              id="demo-toggle"
-              checked={demoMode}
-              onCheckedChange={setDemoMode}
-              className="shrink-0 mt-0.5"
-            />
+            <Switch id="demo-toggle" checked={demoMode} onCheckedChange={setDemoMode} className="shrink-0 mt-0.5" />
           </div>
         </div>
 
@@ -75,7 +87,7 @@ export default function Settings() {
                 placeholder="0x..."
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="h-11 rounded-xl bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] font-mono text-[13px] text-foreground placeholder:text-muted-foreground/60 focus:border-primary/40"
+                className="h-11 rounded-xl font-mono text-[13px]"
               />
             </div>
             <div className="flex items-center justify-between">
