@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, LogOut, FlaskConical, Settings, Menu, X, Wallet, Bell, Wifi } from 'lucide-react';
+import { Shield, LogOut, FlaskConical, Settings, Menu, X, Wallet, Bell, Wifi, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { shortenAddress } from '@/lib/wallet';
 import { isOnSepolia, switchToSepolia, isBlockchainConfigured } from '@/lib/blockchain';
@@ -17,11 +17,22 @@ const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
     { label: 'Batches', path: '/batches' },
     { label: 'Transfer', path: '/transfer' },
     { label: 'Supply Chain', path: '/supply-chain' },
+    { label: 'Recall', path: '/recall' },
+  ],
+  distributor: [
+    { label: 'Verify', path: '/verify' },
+    { label: 'Transfer', path: '/transfer' },
+    { label: 'Supply Chain', path: '/supply-chain' },
+    { label: 'Scan Logs', path: '/logs' },
   ],
   pharmacy: [
     { label: 'Verify', path: '/verify' },
     { label: 'Scan Logs', path: '/logs' },
     { label: 'Supply Chain', path: '/supply-chain' },
+  ],
+  consumer: [
+    { label: 'Verify', path: '/consumer' },
+    { label: 'Report', path: '/report' },
   ],
   regulator: [
     { label: 'Dashboard', path: '/dashboard' },
@@ -29,15 +40,26 @@ const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
     { label: 'Scan Logs', path: '/logs' },
     { label: 'Alerts', path: '/alerts' },
     { label: 'Audit', path: '/audit' },
+    { label: 'Trust', path: '/trust' },
+    { label: 'Recall', path: '/recall' },
+    { label: 'Feed', path: '/feed' },
+  ],
+  auditor: [
+    { label: 'Audit', path: '/audit' },
+    { label: 'Scan Logs', path: '/logs' },
     { label: 'Supply Chain', path: '/supply-chain' },
-    { label: 'Transfer', path: '/transfer' },
+    { label: 'Trust', path: '/trust' },
+    { label: 'Feed', path: '/feed' },
   ],
 };
 
 const roleLabels: Record<AppRole, string> = {
   manufacturer: 'Manufacturer',
+  distributor: 'Distributor',
   pharmacy: 'Pharmacy',
+  consumer: 'Consumer',
   regulator: 'Regulator',
+  auditor: 'Auditor',
 };
 
 export function Navbar() {
@@ -47,6 +69,7 @@ export function Navbar() {
   const [alertCount, setAlertCount] = useState(0);
   const [onSepolia, setOnSepolia] = useState<boolean | null>(null);
   const isLanding = location.pathname === '/' && !activeRole;
+  const isConsumerPage = location.pathname === '/consumer' || location.pathname === '/report';
 
   const navItems = activeRole ? roleNavItems[activeRole] : [];
 
@@ -70,10 +93,12 @@ export function Navbar() {
     else { toast.error('Failed to switch network'); }
   };
 
+  // Hide navbar on consumer-facing pages for cleaner experience
+  if (isConsumerPage && !activeRole) return null;
+
   return (
     <header className={`sticky top-0 z-50 border-b transition-all duration-300 ${isLanding ? 'bg-background/80 backdrop-blur-xl border-transparent' : 'glass border-border'}`}>
       <div className="container flex h-14 items-center gap-4">
-        {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary transition-transform duration-300 group-hover:scale-105">
             <Shield className="h-4 w-4 text-primary-foreground" />
@@ -81,12 +106,12 @@ export function Navbar() {
           <span className="font-semibold text-[15px] tracking-tight text-foreground">PharmaShield</span>
         </Link>
 
-        {/* Landing nav links */}
         {isLanding && (
           <nav className="hidden md:flex items-center gap-1 ml-6">
             {[
               { label: 'About', href: '#technology' },
               { label: 'Technology', href: '#technology' },
+              { label: 'Consumer', to: '/consumer' },
               { label: 'Dashboard', to: '/login' },
             ].map((item) =>
               'to' in item ? (
@@ -106,7 +131,6 @@ export function Navbar() {
           </nav>
         )}
 
-        {/* Authenticated nav links */}
         {!isLanding && (
           <nav className="hidden md:flex items-center gap-0.5 ml-6">
             {navItems.map((item) => {
@@ -129,8 +153,15 @@ export function Navbar() {
           </nav>
         )}
 
-        {/* Right actions */}
         <div className="ml-auto flex items-center gap-2">
+          {user && (
+            <Link to="/search" className="hidden md:inline-flex">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent">
+                <Search className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
+
           {walletAddress && onSepolia !== null && isBlockchainConfigured() && (
             onSepolia ? (
               <Badge variant="secondary" className="hidden md:inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/10 text-success border-success/20 gap-1">
@@ -153,8 +184,11 @@ export function Navbar() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="manufacturer">Manufacturer</SelectItem>
+                  <SelectItem value="distributor">Distributor</SelectItem>
                   <SelectItem value="pharmacy">Pharmacy</SelectItem>
+                  <SelectItem value="consumer">Consumer</SelectItem>
                   <SelectItem value="regulator">Regulator</SelectItem>
+                  <SelectItem value="auditor">Auditor</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -212,7 +246,6 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-border glass animate-fade-in">
           <div className="container py-3 flex flex-col gap-1">
@@ -221,6 +254,9 @@ export function Navbar() {
                 <a href="#technology" onClick={() => setMobileOpen(false)}>
                   <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-foreground hover:bg-accent">Technology</div>
                 </a>
+                <Link to="/consumer" onClick={() => setMobileOpen(false)}>
+                  <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-foreground hover:bg-accent">Consumer Verify</div>
+                </Link>
                 <div className="h-px bg-border my-1" />
               </>
             )}
@@ -235,6 +271,9 @@ export function Navbar() {
               );
             })}
             <div className="h-px bg-border my-1" />
+            <Link to="/search" onClick={() => setMobileOpen(false)}>
+              <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground hover:bg-accent">Search</div>
+            </Link>
             <button onClick={() => { setDemoMode(!demoMode); setMobileOpen(false); }} className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground text-left hover:bg-accent">
               {demoMode ? 'Exit Demo Mode' : 'Enable Demo Mode'}
             </button>
@@ -255,8 +294,11 @@ export function Navbar() {
                   <SelectTrigger className="h-8 flex-1 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="manufacturer">Manufacturer</SelectItem>
+                    <SelectItem value="distributor">Distributor</SelectItem>
                     <SelectItem value="pharmacy">Pharmacy</SelectItem>
+                    <SelectItem value="consumer">Consumer</SelectItem>
                     <SelectItem value="regulator">Regulator</SelectItem>
+                    <SelectItem value="auditor">Auditor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

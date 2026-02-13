@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import {
   Shield, Package, ScanLine, LayoutDashboard, ArrowRight,
   Lock, CheckCircle, Globe, Zap, BarChart3,
-  Cpu, ChevronRight, Fingerprint, ArrowUpRight
+  Cpu, ChevronRight, Fingerprint, ArrowUpRight,
+  Truck, FileText, Star, Users, Flag, Activity
 } from 'lucide-react';
 
 /* ───── Sub-components ───── */
@@ -204,14 +205,22 @@ function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 lg:grid-cols-3 gap-4">
             {[
               {
                 icon: Package, title: 'Manufacturers', items: [
                   'Register batches on blockchain',
                   'Auto-generate downloadable QR codes',
                   'Track batch status and scan history',
-                  'On-chain transaction proof',
+                  'Recall batches when needed',
+                ]
+              },
+              {
+                icon: Truck, title: 'Distributors', items: [
+                  'Receive and verify incoming batches',
+                  'Transfer ownership on-chain',
+                  'Track supply chain journey',
+                  'Full audit trail',
                 ]
               },
               {
@@ -223,11 +232,27 @@ function LandingPage() {
                 ]
               },
               {
+                icon: Users, title: 'Consumers', items: [
+                  'Scan QR to check authenticity',
+                  'View medicine details instantly',
+                  'See ownership history',
+                  'Report suspicious products',
+                ]
+              },
+              {
                 icon: LayoutDashboard, title: 'Regulators', items: [
                   'Full analytics dashboard',
                   'Real-time scan monitoring',
-                  'View all batches system-wide',
+                  'Recall authority',
                   'Risk alerts and anomaly reports',
+                ]
+              },
+              {
+                icon: FileText, title: 'Auditors', items: [
+                  'Immutable audit logs',
+                  'Export compliance reports',
+                  'Inspect ownership history',
+                  'Trust score monitoring',
                 ]
               },
             ].map((role) => (
@@ -249,7 +274,7 @@ function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link to="/login" className="mt-auto">
+                <Link to={role.title === 'Consumers' ? '/consumer' : '/login'} className="mt-auto">
                   <Button
                     variant={role.popular ? 'default' : 'outline'}
                     className={`rounded-full w-full text-[13px] font-medium gap-2 ${role.popular ? 'glow-primary' : ''}`}
@@ -320,17 +345,38 @@ function AuthenticatedHome() {
     manufacturer: [
       { title: 'Register Batch', desc: 'Register a new drug batch and generate its QR code', icon: Package, path: '/register' },
       { title: 'My Batches', desc: 'View and manage all your registered batches', icon: Package, path: '/batches' },
-      { title: 'Verify Batch', desc: 'Scan a QR to check authenticity', icon: ScanLine, path: '/verify' },
+      { title: 'Transfer', desc: 'Transfer batch ownership to another party', icon: ArrowRight, path: '/transfer' },
+      { title: 'Recall Batch', desc: 'Issue a recall for a medicine batch', icon: Shield, path: '/recall' },
+      { title: 'Supply Chain', desc: 'Track batch journey across the supply chain', icon: Truck, path: '/supply-chain' },
+    ],
+    distributor: [
+      { title: 'Verify Batch', desc: 'Scan incoming batches to verify authenticity', icon: ScanLine, path: '/verify' },
+      { title: 'Transfer', desc: 'Transfer ownership to the next party', icon: ArrowRight, path: '/transfer' },
+      { title: 'Supply Chain', desc: 'Track ownership history of batches', icon: Truck, path: '/supply-chain' },
+      { title: 'Scan Logs', desc: 'Review past verification scans', icon: BarChart3, path: '/logs' },
     ],
     pharmacy: [
-      { title: 'Verify Batch', desc: 'Scan a QR code to verify drug authenticity in real-time', icon: ScanLine, path: '/verify' },
+      { title: 'Verify Batch', desc: 'Scan a QR code to verify drug authenticity', icon: ScanLine, path: '/verify' },
       { title: 'Scan History', desc: 'Review your past verification scans', icon: BarChart3, path: '/logs' },
+      { title: 'Supply Chain', desc: 'View batch journey and ownership', icon: Truck, path: '/supply-chain' },
+    ],
+    consumer: [
+      { title: 'Verify Medicine', desc: 'Scan QR to check authenticity instantly', icon: ScanLine, path: '/consumer' },
+      { title: 'Report Issue', desc: 'Report suspicious medicine you found', icon: Flag, path: '/report' },
     ],
     regulator: [
-      { title: 'Dashboard', desc: 'View analytics, charts, and scan activity overview', icon: LayoutDashboard, path: '/dashboard' },
+      { title: 'Dashboard', desc: 'View analytics, charts, and scan activity', icon: LayoutDashboard, path: '/dashboard' },
       { title: 'All Batches', desc: 'Browse every registered batch in the system', icon: Package, path: '/batches' },
-      { title: 'Scan Logs', desc: 'Review all verification scan logs and anomalies', icon: ScanLine, path: '/logs' },
-      { title: 'Settings', desc: 'Configure smart contract and demo mode', icon: Zap, path: '/settings' },
+      { title: 'Trust Scores', desc: 'View manufacturer reputation scores', icon: Star, path: '/trust' },
+      { title: 'Alerts', desc: 'Review and resolve active risk alerts', icon: Shield, path: '/alerts' },
+      { title: 'Recall Batch', desc: 'Issue recalls for unsafe medicine batches', icon: Shield, path: '/recall' },
+      { title: 'Event Feed', desc: 'Live blockchain event stream', icon: Activity, path: '/feed' },
+    ],
+    auditor: [
+      { title: 'Audit Logs', desc: 'View immutable compliance records', icon: FileText, path: '/audit' },
+      { title: 'Trust Scores', desc: 'Manufacturer reputation monitoring', icon: Star, path: '/trust' },
+      { title: 'Supply Chain', desc: 'Inspect ownership history of any batch', icon: Truck, path: '/supply-chain' },
+      { title: 'Event Feed', desc: 'Live blockchain event stream', icon: Activity, path: '/feed' },
     ],
   };
 
