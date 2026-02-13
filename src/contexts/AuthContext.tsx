@@ -1,84 +1,230 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { ethers } from 'ethers';
 import { supabase } from '@/integrations/supabase/client';
-import type { AppRole, UserProfile } from '@/types';
+import type { AppRole, WalletUser } from '@/types';
 
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
-  profile: UserProfile | null;
-  roles: AppRole[];
+  walletAddress: string | null;
+  user: WalletUser | null;
+  activeRole: AppRole | null;
   loading: boolean;
+  connecting: boolean;
   demoMode: boolean;
   demoRole: AppRole;
   setDemoMode: (v: boolean) => void;
   setDemoRole: (r: AppRole) => void;
-  activeRole: AppRole | null;
-  signOut: () => Promise<void>;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
+  setUserRole: (role: AppRole) => Promise<void>;
+  isMetaMaskInstalled: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const WALLET_KEY = 'pharmashield_wallet';
+const ROLE_KEY = 'pharmashield_role';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>([]);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [user, setUser] = useState<WalletUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [demoRole, setDemoRole] = useState<AppRole>('manufacturer');
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setTimeout(() => {
-          fetchProfile(session.user.id);
-          fetchRoles(session.user.id);
-        }, 0);
-      } else {
-        setProfile(null);
-        setRoles([]);
-      }
-    });
+  const isMetaMaskInstalled = typeof window !== 'undefined' && !!(window as any).ethereum?.isMetaMask;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-        fetchRoles(session.user.id);
-      }
-      setLoading(false);
-    });
+  const fetchOrCreateUser = useCallback(async (address: string): Promise<WalletUser | null> => {
+    try {
+      const normalizedAddress = address.toLowerCase();
 
-    return () => subscription.unsubscribe();
+      // Check if user exists in Supabase
+      const { data: existing } = await supabase
+        .from('wallet_users')
+        .select('*')
+        .eq('wallet_address', normalizedAddress)
+        .maybeSingle();
+
+      if (existing) {
+        const walletUser: WalletUser = {
+          walletAddress: existing.wallet_address,
+          role: existing.role as AppRole,
+          displayName: existing.display_name,
+          organization: existing.organization,
+          createdAt: existing.created_at,
+        };
+        return walletUser;
+      }
+
+      // Auto-create new user record
+      const savedRole = localStorage.getItem(ROLE_KEY) as AppRole | null;
+      const role = savedRole || 'manufacturer';
+
+      const { data: newUser, error } = await supabase
+        .from('wallet_users')
+        .insert({
+          wallet_address: normalizedAddress,
+          role,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating wallet user:', error);
+        // Fallback: return local user if DB fails
+        return {
+          walletAddress: normalizedAddress,
+          role,
+          displayName: null,
+          organization: null,
+          createdAt: new Date().toISOString(),
+        };
+      }
+
+      return {
+        walletAddress: newUser.wallet_address,
+        role: newUser.role as AppRole,
+        displayName: newUser.display_name,
+        organization: newUser.organization,
+        createdAt: newUser.created_at,
+      };
+    } catch {
+      // Fallback for when Supabase tables don't exist yet
+      const savedRole = localStorage.getItem(ROLE_KEY) as AppRole | null;
+      return {
+        walletAddress: address.toLowerCase(),
+        role: savedRole || 'manufacturer',
+        displayName: null,
+        organization: null,
+        createdAt: new Date().toISOString(),
+      };
+    }
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('user_id', userId).single();
-    if (data) setProfile(data as UserProfile);
+  // Restore wallet on load
+  useEffect(() => {
+    const restore = async () => {
+      const saved = localStorage.getItem(WALLET_KEY);
+      if (saved && isMetaMaskInstalled) {
+        try {
+          const provider = new ethers.BrowserProvider((window as any).ethereum);
+          const accounts = await provider.listAccounts();
+          const match = accounts.find(
+            (acc) => acc.address.toLowerCase() === saved.toLowerCase()
+          );
+          if (match) {
+            setWalletAddress(match.address.toLowerCase());
+            const userData = await fetchOrCreateUser(match.address);
+            setUser(userData);
+          } else {
+            localStorage.removeItem(WALLET_KEY);
+          }
+        } catch {
+          localStorage.removeItem(WALLET_KEY);
+        }
+      }
+      setLoading(false);
+    };
+    restore();
+  }, [isMetaMaskInstalled, fetchOrCreateUser]);
+
+  // Listen for account changes
+  useEffect(() => {
+    if (!isMetaMaskInstalled) return;
+    const eth = (window as any).ethereum;
+
+    const handleAccountsChanged = async (accounts: string[]) => {
+      if (accounts.length === 0) {
+        disconnectWallet();
+      } else {
+        const addr = accounts[0].toLowerCase();
+        setWalletAddress(addr);
+        localStorage.setItem(WALLET_KEY, addr);
+        const userData = await fetchOrCreateUser(addr);
+        setUser(userData);
+      }
+    };
+
+    eth.on('accountsChanged', handleAccountsChanged);
+    return () => eth.removeListener('accountsChanged', handleAccountsChanged);
+  }, [isMetaMaskInstalled, fetchOrCreateUser]);
+
+  const connectWallet = async () => {
+    if (!isMetaMaskInstalled) {
+      window.open('https://metamask.io/download/', '_blank');
+      return;
+    }
+
+    setConnecting(true);
+    try {
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const accounts = await provider.send('eth_requestAccounts', []);
+      const address = accounts[0].toLowerCase();
+
+      // Sign a message for verification (non-transaction)
+      const signer = await provider.getSigner();
+      const message = `Sign in to PharmaShield\nWallet: ${address}\nTimestamp: ${Date.now()}`;
+      await signer.signMessage(message);
+
+      setWalletAddress(address);
+      localStorage.setItem(WALLET_KEY, address);
+
+      const userData = await fetchOrCreateUser(address);
+      setUser(userData);
+    } catch (err: any) {
+      console.error('Wallet connection failed:', err);
+      throw err;
+    } finally {
+      setConnecting(false);
+    }
   };
 
-  const fetchRoles = async (userId: string) => {
-    const { data } = await supabase.from('user_roles').select('role').eq('user_id', userId);
-    if (data) setRoles(data.map((r: any) => r.role as AppRole));
-  };
-
-  const activeRole: AppRole | null = demoMode ? demoRole : (roles[0] ?? null);
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const disconnectWallet = () => {
+    setWalletAddress(null);
+    setUser(null);
     setDemoMode(false);
+    localStorage.removeItem(WALLET_KEY);
+    localStorage.removeItem(ROLE_KEY);
   };
+
+  const setUserRole = async (role: AppRole) => {
+    if (!walletAddress) return;
+    localStorage.setItem(ROLE_KEY, role);
+
+    try {
+      await supabase
+        .from('wallet_users')
+        .update({ role })
+        .eq('wallet_address', walletAddress);
+    } catch {
+      // Silently fail if table doesn't exist
+    }
+
+    setUser((prev) => prev ? { ...prev, role } : null);
+  };
+
+  const activeRole: AppRole | null = demoMode
+    ? demoRole
+    : (user?.role ?? null);
 
   return (
-    <AuthContext.Provider value={{
-      session, user, profile, roles, loading,
-      demoMode, demoRole, setDemoMode, setDemoRole,
-      activeRole, signOut
-    }}>
+    <AuthContext.Provider
+      value={{
+        walletAddress,
+        user,
+        activeRole,
+        loading,
+        connecting,
+        demoMode,
+        demoRole,
+        setDemoMode,
+        setDemoRole,
+        connectWallet,
+        disconnectWallet,
+        setUserRole,
+        isMetaMaskInstalled,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
