@@ -125,7 +125,7 @@ export default function Settings() {
             <div className="flex-1 min-w-0">
               <h2 className="text-[15px] font-semibold text-foreground">Smart Contract</h2>
               <p className="text-[13px] text-muted-foreground mt-0.5 leading-relaxed">
-                Configure the deployed PharmaShield contract address on Polygon testnet.
+                Configure the deployed PharmaShield contract address on Ethereum Sepolia testnet.
               </p>
             </div>
           </div>

@@ -280,7 +280,7 @@ export default function RegisterBatch() {
                   <div className="min-w-0">
                     <p className="text-[11px] text-muted-foreground">Transaction Hash</p>
                     <a
-                      href={`https://amoy.polygonscan.com/tx/${lastTxHash}`}
+                      href={`https://sepolia.etherscan.io/tx/${lastTxHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[12px] font-mono text-primary hover:underline break-all"
