@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Shield, Wallet, Loader2, CheckCircle } from 'lucide-react';
-import { isMetaMaskAvailable, isPhantomAvailable, shortenAddress } from '@/lib/wallet';
+import { isMetaMaskAvailable, shortenAddress } from '@/lib/wallet';
 import { toast } from 'sonner';
 import type { AppRole } from '@/types';
 
@@ -32,8 +32,8 @@ export default function Login() {
     }
   }, [loading, isConnected, hasRole, roles, navigate]);
 
-  const handleConnect = async (wallet: 'metamask' | 'phantom') => {
-    await connectWithWallet(wallet);
+  const handleConnect = async () => {
+    await connectWithWallet('metamask');
   };
 
   const handleSaveRole = async () => {
@@ -92,7 +92,7 @@ export default function Login() {
           {!isConnected ? (
             <div className="flex flex-col gap-3">
               <Button
-                onClick={() => handleConnect('metamask')}
+                onClick={handleConnect}
                 disabled={walletConnecting || !isMetaMaskAvailable()}
                 className="w-full h-12 rounded-xl text-[14px] font-medium glow-primary justify-start gap-3 px-5"
               >
@@ -104,19 +104,9 @@ export default function Login() {
                 {isMetaMaskAvailable() ? 'Connect MetaMask' : 'MetaMask Not Detected'}
               </Button>
 
-              <Button
-                onClick={() => handleConnect('phantom')}
-                disabled={walletConnecting || !isPhantomAvailable()}
-                variant="outline"
-                className="w-full h-12 rounded-xl text-[14px] font-medium justify-start gap-3 px-5 border-border hover:bg-accent"
-              >
-                <Wallet className="h-5 w-5" />
-                {isPhantomAvailable() ? 'Connect Phantom' : 'Phantom Not Detected'}
-              </Button>
-
-              {!isMetaMaskAvailable() && !isPhantomAvailable() && (
+              {!isMetaMaskAvailable() && (
                 <p className="text-[12px] text-muted-foreground text-center mt-2">
-                  No wallet detected. Install MetaMask or Phantom to continue.
+                  MetaMask not detected. Please install the MetaMask extension to continue.
                 </p>
               )}
             </div>
