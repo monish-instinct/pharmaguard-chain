@@ -1,14 +1,13 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 import {
-  Shield, Package, ScanLine, LayoutDashboard, ArrowRight,
-  Lock, CheckCircle, Globe, Zap, BarChart3,
-  Cpu, ChevronRight, Fingerprint, ArrowUpRight,
-  Truck, FileText, Star, Users, Flag, Activity,
-  QrCode, Boxes, ShieldCheck, Brain, Smartphone
+  Shield, Package, ScanLine, ArrowRight,
+  Lock, CheckCircle, Globe, BarChart3,
+  ArrowUpRight,
+  QrCode, Boxes, ShieldCheck, Brain
 } from 'lucide-react';
 
 /* ───── Animation helpers ───── */
@@ -642,97 +641,17 @@ function LandingPage() {
   );
 }
 
-/* ───── Authenticated Home ───── */
-
-function RoleCard({ icon: Icon, title, description, path }: { icon: React.ElementType; title: string; description: string; path: string }) {
-  return (
-    <Link to={path}>
-      <div className="apple-card-interactive p-5 flex items-center gap-4 h-full">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/[0.07]">
-          <Icon className="h-5 w-5 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-[15px] font-semibold text-foreground">{title}</h3>
-          <p className="text-[13px] text-muted-foreground mt-0.5 leading-relaxed">{description}</p>
-        </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-      </div>
-    </Link>
-  );
-}
-
-function AuthenticatedHome() {
-  const { activeRole, demoMode, walletAddress } = useAuth();
-
-  const rolePages: Record<string, { title: string; desc: string; icon: React.ElementType; path: string }[]> = {
-    manufacturer: [
-      { title: 'Register Batch', desc: 'Register a new drug batch and generate its QR code', icon: Package, path: '/register' },
-      { title: 'My Batches', desc: 'View and manage all your registered batches', icon: Package, path: '/batches' },
-      { title: 'Transfer', desc: 'Transfer batch ownership to another party', icon: ArrowRight, path: '/transfer' },
-      { title: 'Recall Batch', desc: 'Issue a recall for a medicine batch', icon: Shield, path: '/recall' },
-      { title: 'Supply Chain', desc: 'Track batch journey across the supply chain', icon: Truck, path: '/supply-chain' },
-    ],
-    distributor: [
-      { title: 'Verify Batch', desc: 'Scan incoming batches to verify authenticity', icon: ScanLine, path: '/verify' },
-      { title: 'Transfer', desc: 'Transfer ownership to the next party', icon: ArrowRight, path: '/transfer' },
-      { title: 'Supply Chain', desc: 'Track ownership history of batches', icon: Truck, path: '/supply-chain' },
-      { title: 'Scan Logs', desc: 'Review past verification scans', icon: BarChart3, path: '/logs' },
-    ],
-    pharmacy: [
-      { title: 'Verify Batch', desc: 'Scan a QR code to verify drug authenticity', icon: ScanLine, path: '/verify' },
-      { title: 'Scan History', desc: 'Review your past verification scans', icon: BarChart3, path: '/logs' },
-      { title: 'Supply Chain', desc: 'View batch journey and ownership', icon: Truck, path: '/supply-chain' },
-    ],
-    consumer: [
-      { title: 'Verify Medicine', desc: 'Scan QR to check authenticity instantly', icon: ScanLine, path: '/consumer' },
-      { title: 'Report Issue', desc: 'Report suspicious medicine you found', icon: Flag, path: '/report' },
-    ],
-    regulator: [
-      { title: 'Dashboard', desc: 'View analytics, charts, and scan activity', icon: LayoutDashboard, path: '/dashboard' },
-      { title: 'All Batches', desc: 'Browse every registered batch in the system', icon: Package, path: '/batches' },
-      { title: 'Trust Scores', desc: 'View manufacturer reputation scores', icon: Star, path: '/trust' },
-      { title: 'Alerts', desc: 'Review and resolve active risk alerts', icon: Shield, path: '/alerts' },
-      { title: 'Recall Batch', desc: 'Issue recalls for unsafe medicine batches', icon: Shield, path: '/recall' },
-      { title: 'Event Feed', desc: 'Live blockchain event stream', icon: Activity, path: '/feed' },
-    ],
-    auditor: [
-      { title: 'Audit Logs', desc: 'View immutable compliance records', icon: FileText, path: '/audit' },
-      { title: 'Trust Scores', desc: 'Manufacturer reputation monitoring', icon: Star, path: '/trust' },
-      { title: 'Supply Chain', desc: 'Inspect ownership history of any batch', icon: Truck, path: '/supply-chain' },
-      { title: 'Event Feed', desc: 'Live blockchain event stream', icon: Activity, path: '/feed' },
-    ],
-  };
-
-  const pages = activeRole ? rolePages[activeRole] || [] : [];
-
-  return (
-    <main className="container py-10 animate-fade-in">
-      <div className="mb-8">
-        <h1 className="text-[24px] font-bold tracking-tight text-foreground">
-          Welcome back{demoMode ? ' (Demo)' : ''}
-        </h1>
-        <p className="text-[15px] text-muted-foreground mt-1">
-          Signed in as <span className="font-medium capitalize text-foreground">{activeRole}</span>
-          {walletAddress && <span className="font-mono text-[13px] ml-1 text-muted-foreground">· {walletAddress.slice(0, 8)}…</span>}
-        </p>
-      </div>
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {pages.map((page) => (
-          <RoleCard key={page.path} icon={page.icon} title={page.title} description={page.desc} path={page.path} />
-        ))}
-      </div>
-    </main>
-  );
-}
-
 /* ───── Main Export ───── */
 
 export default function Index() {
   const { activeRole } = useAuth();
+  const navigate = useNavigate();
 
-  if (!activeRole) {
-    return <LandingPage />;
-  }
+  useEffect(() => {
+    if (activeRole) {
+      navigate('/home', { replace: true });
+    }
+  }, [activeRole, navigate]);
 
-  return <AuthenticatedHome />;
+  return <LandingPage />;
 }
