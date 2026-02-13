@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { generateBatchHash, registerBatchOnChain, isBlockchainConfigured } from '@/lib/blockchain';
+import { registerBatchOnChain, isBlockchainConfigured } from '@/lib/blockchain';
 import { uploadToIPFS, type BatchMetadata } from '@/lib/ipfs';
 import QRCode from 'qrcode';
 import { Package, Download, Loader2, CheckCircle, Pill, Calendar, Globe, Link as LinkIcon } from 'lucide-react';
@@ -35,6 +35,13 @@ export default function RegisterBatch() {
     setLastTxHash(null);
 
     try {
+      // Step 0: Ensure blockchain is configured
+      if (!isBlockchainConfigured()) {
+        toast.error('Blockchain not configured. Go to Settings and set your smart contract address.');
+        setLoading(false);
+        return;
+      }
+
       // Step 1: Upload metadata to IPFS via Pinata
       setStatus('Uploading metadata to IPFS...');
       const metadata: BatchMetadata = {
@@ -48,27 +55,24 @@ export default function RegisterBatch() {
       };
 
       const ipfsHash = await uploadToIPFS(metadata);
-      if (ipfsHash) {
-        setLastIpfsHash(ipfsHash);
-        toast.success('Metadata uploaded to IPFS');
-      } else {
-        toast.info('IPFS upload skipped — using local hash fallback');
+      if (!ipfsHash) {
+        toast.error('IPFS upload failed. Cannot register without metadata hash.');
+        setLoading(false);
+        return;
       }
+      setLastIpfsHash(ipfsHash);
+      toast.success('Metadata uploaded to IPFS');
 
-      // Step 2: Register on blockchain with IPFS hash
-      const batchHash = ipfsHash || await generateBatchHash(batchId, manufacturer);
-      let txHash: string | null = null;
-
-      if (isBlockchainConfigured()) {
-        setStatus('Registering on blockchain...');
-        txHash = await registerBatchOnChain(batchId, batchHash);
-        if (txHash) {
-          setLastTxHash(txHash);
-          toast.success('Batch registered on blockchain');
-        } else {
-          toast.info('Blockchain unavailable, using Supabase fallback');
-        }
+      // Step 2: Register on blockchain — MetaMask will prompt for approval
+      setStatus('Waiting for MetaMask approval...');
+      const txHash = await registerBatchOnChain(batchId, ipfsHash);
+      if (!txHash) {
+        toast.error('Blockchain transaction failed or was rejected. Batch not registered.');
+        setLoading(false);
+        return;
       }
+      setLastTxHash(txHash);
+      toast.success('Batch registered on blockchain');
 
       // Step 3: Save to Supabase
       setStatus('Saving to database...');
@@ -76,7 +80,7 @@ export default function RegisterBatch() {
         const { error } = await supabase.from('batches').insert({
           batch_id: batchId,
           manufacturer_name: manufacturer,
-          batch_hash: batchHash,
+          batch_hash: ipfsHash,
           blockchain_tx_hash: txHash,
           registered_by: user.id,
           medicine_name: medicineName || null,
