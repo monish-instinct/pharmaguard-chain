@@ -10,12 +10,12 @@ import { toast } from 'sonner';
 import type { AppRole } from '@/types';
 
 const roleRedirectMap: Record<AppRole, string> = {
-  manufacturer: '/register',
-  distributor: '/verify',
-  pharmacy: '/verify',
-  consumer: '/consumer',
-  regulator: '/dashboard',
-  auditor: '/audit',
+  manufacturer: '/home',
+  distributor: '/home',
+  pharmacy: '/home',
+  consumer: '/home',
+  regulator: '/home',
+  auditor: '/home',
 };
 
 const roleDescriptions: Record<AppRole, string> = {

@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import RoleDashboard from "./pages/RoleDashboard";
 import RegisterBatch from "./pages/RegisterBatch";
 import MyBatches from "./pages/MyBatches";
 import VerifyBatch from "./pages/VerifyBatch";
@@ -39,6 +40,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/home" element={<ProtectedRoute><RoleDashboard /></ProtectedRoute>} />
             <Route path="/consumer" element={<ConsumerVerify />} />
             <Route path="/report" element={<ReportIssue />} />
             <Route path="/register" element={<ProtectedRoute allowedRoles={['manufacturer']}><RegisterBatch /></ProtectedRoute>} />

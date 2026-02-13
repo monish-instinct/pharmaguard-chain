@@ -13,6 +13,7 @@ import type { AppRole } from '@/types';
 
 const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
   manufacturer: [
+    { label: 'Home', path: '/home' },
     { label: 'Register', path: '/register' },
     { label: 'Batches', path: '/batches' },
     { label: 'Transfer', path: '/transfer' },
@@ -20,21 +21,25 @@ const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
     { label: 'Recall', path: '/recall' },
   ],
   distributor: [
+    { label: 'Home', path: '/home' },
     { label: 'Verify', path: '/verify' },
     { label: 'Transfer', path: '/transfer' },
     { label: 'Supply Chain', path: '/supply-chain' },
     { label: 'Scan Logs', path: '/logs' },
   ],
   pharmacy: [
+    { label: 'Home', path: '/home' },
     { label: 'Verify', path: '/verify' },
     { label: 'Scan Logs', path: '/logs' },
     { label: 'Supply Chain', path: '/supply-chain' },
   ],
   consumer: [
+    { label: 'Home', path: '/home' },
     { label: 'Verify', path: '/consumer' },
     { label: 'Report', path: '/report' },
   ],
   regulator: [
+    { label: 'Home', path: '/home' },
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Batches', path: '/batches' },
     { label: 'Scan Logs', path: '/logs' },
@@ -45,6 +50,7 @@ const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
     { label: 'Feed', path: '/feed' },
   ],
   auditor: [
+    { label: 'Home', path: '/home' },
     { label: 'Audit', path: '/audit' },
     { label: 'Scan Logs', path: '/logs' },
     { label: 'Supply Chain', path: '/supply-chain' },
