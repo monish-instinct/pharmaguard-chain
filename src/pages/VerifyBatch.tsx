@@ -5,10 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { verifyBatchOnChain, isBlockchainConfigured } from '@/lib/blockchain';
+import { fetchFromIPFS, type BatchMetadata } from '@/lib/ipfs';
 import { detectAnomalies, type RiskAssessment } from '@/lib/anomaly';
 import { RiskMeter } from '@/components/RiskBadge';
-import { ScanLine, CheckCircle, AlertTriangle, XCircle, Camera, Loader2, Search, Shield, Pill, Calendar, Globe, Package } from 'lucide-react';
+import { ScanLine, CheckCircle, AlertTriangle, XCircle, Camera, Loader2, Search, Shield, Pill, Calendar, Globe, Package, Wallet, Link as LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { shortenAddress } from '@/lib/wallet';
 import type { Batch, VerificationResult } from '@/types';
 
 const statusConfig: Record<VerificationResult, { icon: React.ElementType; label: string; color: string; bg: string; glow: string }> = {
@@ -25,7 +27,11 @@ export default function VerifyBatch() {
   const [scannedId, setScannedId] = useState('');
   const [risk, setRisk] = useState<RiskAssessment | null>(null);
   const [batchInfo, setBatchInfo] = useState<Batch | null>(null);
+  const [ipfsMetadata, setIpfsMetadata] = useState<BatchMetadata | null>(null);
+  const [chainOwner, setChainOwner] = useState<string | null>(null);
+  const [chainIpfsHash, setChainIpfsHash] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [verifyStatus, setVerifyStatus] = useState('');
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrRef = useRef<any>(null);
 
@@ -77,34 +83,57 @@ export default function VerifyBatch() {
     setResult(null);
     setRisk(null);
     setBatchInfo(null);
+    setIpfsMetadata(null);
+    setChainOwner(null);
+    setChainIpfsHash(null);
+    setVerifyStatus('');
 
     try {
       const loc = await getLocation();
 
+      // Step 1: Verify on blockchain
       if (isBlockchainConfigured()) {
+        setVerifyStatus('Querying blockchain...');
         const chainResult = await verifyBatchOnChain(batchId);
-        if (chainResult && !chainResult.exists) {
-          setResult('not_found');
-          await logScan(batchId, 'not_found', loc, [], 0);
-          return;
+        if (chainResult) {
+          if (!chainResult.exists) {
+            setResult('not_found');
+            await logScan(batchId, 'not_found', loc, [], 0);
+            setVerifyStatus('');
+            return;
+          }
+          setChainOwner(chainResult.currentOwner || null);
+          setChainIpfsHash(chainResult.ipfsHash || null);
+
+          // Step 2: Fetch IPFS metadata
+          if (chainResult.ipfsHash) {
+            setVerifyStatus('Fetching IPFS metadata...');
+            const ipfsData = await fetchFromIPFS(chainResult.ipfsHash);
+            if (ipfsData) setIpfsMetadata(ipfsData);
+          }
         }
       }
 
+      // Step 3: Also check Supabase for additional data
+      setVerifyStatus('Checking database...');
       const { data: batch } = await supabase.from('batches').select('*').eq('batch_id', batchId).maybeSingle();
-      if (!batch) {
+      if (!batch && !chainOwner) {
         setResult('not_found');
         await logScan(batchId, 'not_found', loc, [], 0);
+        setVerifyStatus('');
         return;
       }
 
-      setBatchInfo(batch as unknown as Batch);
+      if (batch) setBatchInfo(batch as unknown as Batch);
+
+      // Step 4: Run anomaly detection
+      setVerifyStatus('Running anomaly detection...');
       const assessment = await detectAnomalies(batchId, loc?.lat ?? null, loc?.lng ?? null);
       const status: VerificationResult = assessment.isSuspicious ? 'suspicious' : 'authentic';
       setResult(status);
       setRisk(assessment);
       await logScan(batchId, status, loc, assessment.flags, assessment.riskScore);
 
-      // Create alert if high risk
       if (assessment.riskScore >= 45) {
         await supabase.from('alerts').insert({
           batch_id: batchId,
@@ -116,8 +145,10 @@ export default function VerifyBatch() {
           longitude: loc?.lng ?? null,
         });
       }
+      setVerifyStatus('');
     } catch (err: any) {
       toast.error(err.message || 'Verification failed');
+      setVerifyStatus('');
     } finally {
       setLoading(false);
     }
@@ -157,7 +188,7 @@ export default function VerifyBatch() {
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Verify Batch</h1>
-          <p className="text-[13px] text-muted-foreground">Scan or enter a batch ID to verify authenticity</p>
+          <p className="text-[13px] text-muted-foreground">Blockchain-verified authenticity check</p>
         </div>
       </div>
 
@@ -190,6 +221,14 @@ export default function VerifyBatch() {
           </form>
         </div>
 
+        {/* Status indicator during verification */}
+        {verifyStatus && (
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10 animate-fade-in">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span className="text-[13px] text-primary font-medium">{verifyStatus}</span>
+          </div>
+        )}
+
         {/* Result Card */}
         {result && StatusIcon && (
           <div className={`apple-card border-2 p-6 flex flex-col items-center gap-4 animate-scale-in ${statusConfig[result].bg} ${statusConfig[result].glow}`}>
@@ -202,6 +241,31 @@ export default function VerifyBatch() {
               {statusConfig[result].label}
             </Badge>
             <p className="font-mono text-[13px] text-muted-foreground">{scannedId}</p>
+
+            {/* Blockchain Owner */}
+            {chainOwner && (
+              <div className="w-full flex items-center gap-2 p-3 rounded-xl bg-accent/50">
+                <Wallet className="h-4 w-4 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[11px] text-muted-foreground">Current Owner (on-chain)</p>
+                  <p className="text-[12px] font-mono font-medium text-foreground">{shortenAddress(chainOwner)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* IPFS Hash */}
+            {chainIpfsHash && (
+              <div className="w-full flex items-center gap-2 p-3 rounded-xl bg-accent/50">
+                <LinkIcon className="h-4 w-4 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[11px] text-muted-foreground">IPFS Metadata</p>
+                  <a href={`https://gateway.pinata.cloud/ipfs/${chainIpfsHash}`} target="_blank" rel="noopener noreferrer"
+                    className="text-[12px] font-mono text-primary hover:underline break-all">
+                    {chainIpfsHash.slice(0, 20)}...
+                  </a>
+                </div>
+              </div>
+            )}
 
             {/* Risk Score */}
             {risk && risk.riskScore > 0 && (
@@ -235,32 +299,54 @@ export default function VerifyBatch() {
           </div>
         )}
 
-        {/* Consumer-Friendly Batch Info */}
-        {batchInfo && result === 'authentic' && (
+        {/* IPFS Metadata (from blockchain) */}
+        {ipfsMetadata && result === 'authentic' && (
+          <div className="apple-card p-6 animate-fade-in">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="h-4 w-4 text-success" />
+              <span className="text-[14px] font-semibold text-foreground">IPFS Verified Details</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {ipfsMetadata.medicineName && ipfsMetadata.medicineName !== 'N/A' && (
+                <InfoItem icon={Pill} label="Medicine" value={ipfsMetadata.medicineName} />
+              )}
+              {ipfsMetadata.dosage && ipfsMetadata.dosage !== 'N/A' && (
+                <InfoItem icon={Package} label="Dosage" value={ipfsMetadata.dosage} />
+              )}
+              {ipfsMetadata.manufacturer && (
+                <InfoItem icon={Package} label="Manufacturer" value={ipfsMetadata.manufacturer} />
+              )}
+              {ipfsMetadata.countryOrigin && ipfsMetadata.countryOrigin !== 'N/A' && (
+                <InfoItem icon={Globe} label="Origin" value={ipfsMetadata.countryOrigin} />
+              )}
+              {ipfsMetadata.manufacturingDate && ipfsMetadata.manufacturingDate !== 'N/A' && (
+                <InfoItem icon={Calendar} label="Mfg Date" value={ipfsMetadata.manufacturingDate} />
+              )}
+              {ipfsMetadata.expiryDate && ipfsMetadata.expiryDate !== 'N/A' && (
+                <InfoItem icon={Calendar} label="Expiry" value={ipfsMetadata.expiryDate} />
+              )}
+            </div>
+            <div className="mt-4 pt-3 border-t border-border flex items-center gap-2 text-[11px] text-muted-foreground">
+              <CheckCircle className="h-3 w-3 text-success" />
+              Verified from IPFS at {new Date().toLocaleString()}
+            </div>
+          </div>
+        )}
+
+        {/* Supabase batch info fallback */}
+        {batchInfo && !ipfsMetadata && result === 'authentic' && (
           <div className="apple-card p-6 animate-fade-in">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="h-4 w-4 text-success" />
               <span className="text-[14px] font-semibold text-foreground">Verified Medicine Details</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {batchInfo.medicine_name && (
-                <InfoItem icon={Pill} label="Medicine" value={batchInfo.medicine_name} />
-              )}
-              {batchInfo.dosage && (
-                <InfoItem icon={Package} label="Dosage" value={batchInfo.dosage} />
-              )}
-              {batchInfo.manufacturer_name && (
-                <InfoItem icon={Package} label="Manufacturer" value={batchInfo.manufacturer_name} />
-              )}
-              {batchInfo.country_of_origin && (
-                <InfoItem icon={Globe} label="Origin" value={batchInfo.country_of_origin} />
-              )}
-              {batchInfo.manufacturing_date && (
-                <InfoItem icon={Calendar} label="Mfg Date" value={new Date(batchInfo.manufacturing_date).toLocaleDateString()} />
-              )}
-              {batchInfo.expiry_date && (
-                <InfoItem icon={Calendar} label="Expiry" value={new Date(batchInfo.expiry_date).toLocaleDateString()} />
-              )}
+              {batchInfo.medicine_name && <InfoItem icon={Pill} label="Medicine" value={batchInfo.medicine_name} />}
+              {batchInfo.dosage && <InfoItem icon={Package} label="Dosage" value={batchInfo.dosage} />}
+              {batchInfo.manufacturer_name && <InfoItem icon={Package} label="Manufacturer" value={batchInfo.manufacturer_name} />}
+              {batchInfo.country_of_origin && <InfoItem icon={Globe} label="Origin" value={batchInfo.country_of_origin} />}
+              {batchInfo.manufacturing_date && <InfoItem icon={Calendar} label="Mfg Date" value={new Date(batchInfo.manufacturing_date).toLocaleDateString()} />}
+              {batchInfo.expiry_date && <InfoItem icon={Calendar} label="Expiry" value={new Date(batchInfo.expiry_date).toLocaleDateString()} />}
             </div>
             <div className="mt-4 pt-3 border-t border-border flex items-center gap-2 text-[11px] text-muted-foreground">
               <CheckCircle className="h-3 w-3 text-success" />

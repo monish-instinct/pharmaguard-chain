@@ -3,44 +3,98 @@ pragma solidity ^0.8.19;
 
 contract PharmaShield {
     struct Batch {
-        string manufacturerName;
-        string batchHash;
-        uint256 timestamp;
+        string batchId;
+        address currentOwner;
+        string ipfsHash;
+        uint256 createdAt;
         bool exists;
     }
 
-    mapping(string => Batch) private batches;
-    
-    event BatchRegistered(string indexed batchId, string manufacturerName, uint256 timestamp);
+    mapping(string => Batch) public batches;
+    mapping(address => bool) public manufacturers;
+
+    event BatchRegistered(
+        string indexed batchId,
+        address indexed owner,
+        string ipfsHash,
+        uint256 timestamp
+    );
+
+    event OwnershipTransferred(
+        string indexed batchId,
+        address indexed from,
+        address indexed to,
+        uint256 timestamp
+    );
+
+    event BatchVerified(
+        string indexed batchId,
+        address indexed verifier,
+        uint256 timestamp
+    );
+
+    modifier onlyBatchOwner(string calldata batchId) {
+        require(batches[batchId].exists, "Batch does not exist");
+        require(batches[batchId].currentOwner == msg.sender, "Not the batch owner");
+        _;
+    }
 
     function registerBatch(
         string calldata batchId,
-        string calldata manufacturerName,
-        string calldata batchHash
+        string calldata ipfsHash
     ) external {
         require(!batches[batchId].exists, "Batch already registered");
-        
+        require(bytes(ipfsHash).length > 0, "IPFS hash required");
+
         batches[batchId] = Batch({
-            manufacturerName: manufacturerName,
-            batchHash: batchHash,
-            timestamp: block.timestamp,
+            batchId: batchId,
+            currentOwner: msg.sender,
+            ipfsHash: ipfsHash,
+            createdAt: block.timestamp,
             exists: true
         });
 
-        emit BatchRegistered(batchId, manufacturerName, block.timestamp);
+        emit BatchRegistered(batchId, msg.sender, ipfsHash, block.timestamp);
     }
 
-    function verifyBatch(string calldata batchId) 
-        external 
-        view 
+    function verifyBatch(string calldata batchId)
+        external
         returns (
-            string memory manufacturerName,
-            string memory batchHash,
-            uint256 timestamp,
-            bool exists
-        ) 
+            bool exists,
+            address currentOwner,
+            string memory ipfsHash,
+            uint256 createdAt
+        )
     {
         Batch memory batch = batches[batchId];
-        return (batch.manufacturerName, batch.batchHash, batch.timestamp, batch.exists);
+
+        if (batch.exists) {
+            emit BatchVerified(batchId, msg.sender, block.timestamp);
+        }
+
+        return (
+            batch.exists,
+            batch.currentOwner,
+            batch.ipfsHash,
+            batch.createdAt
+        );
+    }
+
+    function transferOwnership(
+        string calldata batchId,
+        address newOwner
+    ) external onlyBatchOwner(batchId) {
+        require(newOwner != address(0), "Invalid new owner");
+        require(newOwner != msg.sender, "Already the owner");
+
+        address previousOwner = batches[batchId].currentOwner;
+        batches[batchId].currentOwner = newOwner;
+
+        emit OwnershipTransferred(batchId, previousOwner, newOwner, block.timestamp);
+    }
+
+    function getBatchOwner(string calldata batchId) external view returns (address) {
+        require(batches[batchId].exists, "Batch does not exist");
+        return batches[batchId].currentOwner;
     }
 }

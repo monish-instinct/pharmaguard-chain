@@ -3,16 +3,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, LogOut, FlaskConical, Settings, Menu, X, Wallet, Bell } from 'lucide-react';
+import { Shield, LogOut, FlaskConical, Settings, Menu, X, Wallet, Bell, Wifi } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { shortenAddress } from '@/lib/wallet';
+import { isOnPolygon, switchToPolygon, isBlockchainConfigured } from '@/lib/blockchain';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { AppRole } from '@/types';
 
 const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
   manufacturer: [
     { label: 'Register', path: '/register' },
     { label: 'Batches', path: '/batches' },
+    { label: 'Transfer', path: '/transfer' },
     { label: 'Supply Chain', path: '/supply-chain' },
   ],
   pharmacy: [
@@ -27,6 +30,7 @@ const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
     { label: 'Alerts', path: '/alerts' },
     { label: 'Audit', path: '/audit' },
     { label: 'Supply Chain', path: '/supply-chain' },
+    { label: 'Transfer', path: '/transfer' },
   ],
 };
 
@@ -41,6 +45,7 @@ export function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
+  const [onPolygon, setOnPolygon] = useState<boolean | null>(null);
 
   const navItems = activeRole ? roleNavItems[activeRole] : [];
 
@@ -49,6 +54,28 @@ export function Navbar() {
     supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('resolved', false)
       .then(({ count }) => setAlertCount(count || 0));
   }, [user, location.pathname]);
+
+  // Check network on mount and on chain change
+  useEffect(() => {
+    if (!walletAddress || !isBlockchainConfigured()) return;
+    isOnPolygon().then(setOnPolygon);
+
+    const handleChainChanged = () => {
+      isOnPolygon().then(setOnPolygon);
+    };
+    (window as any).ethereum?.on?.('chainChanged', handleChainChanged);
+    return () => { (window as any).ethereum?.removeListener?.('chainChanged', handleChainChanged); };
+  }, [walletAddress]);
+
+  const handleSwitchNetwork = async () => {
+    const ok = await switchToPolygon();
+    if (ok) {
+      toast.success('Switched to Polygon Amoy');
+      setOnPolygon(true);
+    } else {
+      toast.error('Failed to switch network');
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border">
@@ -81,6 +108,24 @@ export function Navbar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          {/* Network indicator */}
+          {walletAddress && onPolygon !== null && isBlockchainConfigured() && (
+            onPolygon ? (
+              <Badge variant="secondary" className="hidden md:inline-flex text-[10px] font-medium px-2 py-0.5 rounded-full bg-success/10 text-success border-success/20 gap-1">
+                <Wifi className="h-3 w-3" /> Polygon
+              </Badge>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSwitchNetwork}
+                className="hidden md:inline-flex h-6 px-2 text-[10px] rounded-full border-warning/30 text-warning hover:bg-warning/10"
+              >
+                <Wifi className="h-3 w-3 mr-1" /> Switch to Polygon
+              </Button>
+            )
+          )}
+
           {demoMode && (
             <div className="hidden md:flex items-center gap-2 rounded-full border border-warning/20 bg-warning/5 px-3 py-1">
               <FlaskConical className="h-3.5 w-3.5 text-warning" />
