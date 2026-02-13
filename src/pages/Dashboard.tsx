@@ -11,8 +11,8 @@ import type { ScanLog } from '@/types';
 
 const STATUS_COLORS: Record<string, string> = {
   authentic: 'hsl(142, 71%, 45%)',
-  suspicious: 'hsl(38, 92%, 50%)',
-  not_found: 'hsl(0, 72%, 51%)',
+  suspicious: 'hsl(36, 100%, 50%)',
+  not_found: 'hsl(4, 74%, 49%)',
 };
 
 const statusBadgeClass: Record<string, string> = {
@@ -21,18 +21,18 @@ const statusBadgeClass: Record<string, string> = {
   not_found: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
-function StatCard({ label, value, icon: Icon, accent, glow, loading: isLoading }: { label: string; value: string | number; icon: React.ElementType; accent: string; glow: string; loading?: boolean }) {
+function StatCard({ label, value, icon: Icon, accent, loading: isLoading }: { label: string; value: string | number; icon: React.ElementType; accent: string; loading?: boolean }) {
   return (
-    <div className="apple-card p-5 flex items-center gap-4 group hover:border-primary/10 transition-all duration-300">
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${accent} ${glow} transition-all duration-300`}>
+    <div className="apple-card p-5 flex items-center gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${accent}`}>
         <Icon className="h-5 w-5" />
       </div>
       <div>
-        <p className="text-[13px] text-muted-foreground font-medium">{label}</p>
+        <p className="text-[12px] text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
         {isLoading ? (
-          <Skeleton className="h-7 w-16 mt-1" />
+          <Skeleton className="h-7 w-16 mt-1 rounded-lg" />
         ) : (
-          <p className="text-2xl font-bold tracking-tight text-foreground mt-0.5">{value}</p>
+          <p className="text-[24px] font-bold tracking-tight text-foreground mt-0.5">{value}</p>
         )}
       </div>
     </div>
@@ -40,12 +40,13 @@ function StatCard({ label, value, icon: Icon, accent, glow, loading: isLoading }
 }
 
 const chartTooltipStyle = {
-  borderRadius: '12px',
-  border: '1px solid hsl(220, 13%, 91%)',
-  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+  borderRadius: '14px',
+  border: '0.5px solid hsl(0, 0%, 91%)',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
   fontSize: '13px',
   backgroundColor: 'hsl(0, 0%, 100%)',
-  color: 'hsl(220, 20%, 10%)',
+  color: 'hsl(0, 0%, 11%)',
+  padding: '8px 12px',
 };
 
 interface Alert {
@@ -144,26 +145,27 @@ export default function Dashboard() {
 
   return (
     <main className="container py-10 animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
-          <p className="text-[15px] text-muted-foreground mt-1">Real-time analytics and supply chain overview</p>
+          <h1 className="text-[24px] font-bold tracking-tight text-foreground">Dashboard</h1>
+          <p className="text-[14px] text-muted-foreground mt-1">Real-time analytics and supply chain overview</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleExportScans} className="h-9 rounded-lg text-[12px] gap-1.5">
+        <Button variant="outline" size="sm" onClick={handleExportScans} className="h-9 rounded-xl text-[12px] font-medium gap-1.5 border-border hover:bg-accent">
           <Download className="h-3.5 w-3.5" /> Export Report
         </Button>
       </div>
 
-      {/* Stats */}
+      {/* Stat Cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-5 mb-8">
-        <StatCard label="Total Batches" value={totalBatches} icon={Package} accent="bg-primary/10 text-primary" glow="glow-primary" loading={isLoading} />
-        <StatCard label="Total Scans" value={totalScans} icon={ScanLine} accent="bg-primary/10 text-primary" glow="glow-primary" loading={isLoading} />
-        <StatCard label="Suspicious" value={suspiciousCount} icon={AlertTriangle} accent="bg-warning/10 text-warning" glow="glow-warning" loading={isLoading} />
-        <StatCard label="Active Alerts" value={alertCount} icon={Bell} accent="bg-destructive/10 text-destructive" glow="glow-destructive" loading={isLoading} />
-        <StatCard label="Authentic Rate" value={`${authenticRate}%`} icon={ShieldCheck} accent="bg-success/10 text-success" glow="glow-success" loading={isLoading} />
+        <StatCard label="Batches" value={totalBatches} icon={Package} accent="bg-primary/[0.07] text-primary" loading={isLoading} />
+        <StatCard label="Scans" value={totalScans} icon={ScanLine} accent="bg-primary/[0.07] text-primary" loading={isLoading} />
+        <StatCard label="Suspicious" value={suspiciousCount} icon={AlertTriangle} accent="bg-warning/10 text-warning" loading={isLoading} />
+        <StatCard label="Alerts" value={alertCount} icon={Bell} accent="bg-destructive/10 text-destructive" loading={isLoading} />
+        <StatCard label="Authentic" value={`${authenticRate}%`} icon={ShieldCheck} accent="bg-success/10 text-success" loading={isLoading} />
       </div>
 
-      {/* Charts Row */}
+      {/* Charts */}
       <div className="grid gap-4 md:grid-cols-2 mb-8">
         <div className="apple-card p-6">
           <h2 className="text-[15px] font-semibold text-foreground mb-5">Scan Trends</h2>
@@ -174,14 +176,14 @@ export default function Dashboard() {
               <AreaChart data={dailyScans}>
                 <defs>
                   <linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(211, 100%, 50%)" stopOpacity={0.15} />
+                    <stop offset="5%" stopColor="hsl(211, 100%, 50%)" stopOpacity={0.12} />
                     <stop offset="95%" stopColor="hsl(211, 100%, 50%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
-                <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} stroke="hsl(220, 10%, 60%)" />
-                <YAxis fontSize={11} tickLine={false} axisLine={false} stroke="hsl(220, 10%, 60%)" />
-                <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: 'hsla(220, 14%, 96%, 0.5)' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 93%)" />
+                <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} stroke="hsl(0, 0%, 60%)" />
+                <YAxis fontSize={11} tickLine={false} axisLine={false} stroke="hsl(0, 0%, 60%)" />
+                <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: 'hsla(0, 0%, 96%, 0.5)' }} />
                 <Area type="monotone" dataKey="count" stroke="hsl(211, 100%, 50%)" fill="url(#scanGrad)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
@@ -196,7 +198,7 @@ export default function Dashboard() {
             <>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
-                  <Pie data={statusBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={45} strokeWidth={2} stroke="hsl(0, 0%, 100%)">
+                  <Pie data={statusBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={48} strokeWidth={2} stroke="hsl(0, 0%, 100%)">
                     {statusBreakdown.map((entry) => (
                       <Cell key={entry.name} fill={STATUS_COLORS[entry.name]} />
                     ))}
@@ -217,7 +219,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Alerts + Top Medicines Row */}
+      {/* Alerts + Top Medicines */}
       <div className="grid gap-4 md:grid-cols-2 mb-8">
         <div className="apple-card p-6">
           <div className="flex items-center justify-between mb-4">
@@ -229,13 +231,14 @@ export default function Dashboard() {
             )}
           </div>
           {recentAlerts.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-center py-10">
+              <ShieldCheck className="h-8 w-8 text-success/40 mx-auto mb-2" />
               <p className="text-[13px] text-muted-foreground">No active alerts</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               {recentAlerts.map((alert) => (
-                <div key={alert.id} className="flex items-center gap-3 p-3 rounded-xl bg-accent/50">
+                <div key={alert.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 transition-colors hover:bg-muted">
                   <AlertTriangle className={`h-4 w-4 shrink-0 ${alert.severity === 'high' || alert.severity === 'critical' ? 'text-destructive' : 'text-warning'}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[12px] font-medium text-foreground truncate">{alert.message}</p>
@@ -251,14 +254,15 @@ export default function Dashboard() {
         <div className="apple-card p-6">
           <h2 className="text-[15px] font-semibold text-foreground mb-4">Top Medicines</h2>
           {topMedicines.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-center py-10">
+              <Pill className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
               <p className="text-[13px] text-muted-foreground">No medicine data yet</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
               {topMedicines.map((med, i) => (
                 <div key={med.name} className="flex items-center gap-3">
-                  <span className="text-[12px] font-bold text-muted-foreground w-5">{i + 1}</span>
+                  <span className="text-[12px] font-bold text-muted-foreground w-5 text-right">{i + 1}</span>
                   <Pill className="h-4 w-4 text-primary shrink-0" />
                   <span className="text-[13px] font-medium text-foreground flex-1 truncate">{med.name}</span>
                   <Badge variant="outline" className="text-[10px] rounded-full px-2 py-0 border-border text-muted-foreground">
@@ -293,19 +297,19 @@ export default function Dashboard() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b border-border/50">
-                    <td className="px-6 py-3.5"><Skeleton className="h-4 w-32" /></td>
+                    <td className="px-6 py-3.5"><Skeleton className="h-4 w-32 rounded-md" /></td>
                     <td className="px-6 py-3.5"><Skeleton className="h-5 w-20 rounded-full" /></td>
-                    <td className="px-6 py-3.5"><Skeleton className="h-4 w-24" /></td>
-                    <td className="px-6 py-3.5"><Skeleton className="h-4 w-28" /></td>
+                    <td className="px-6 py-3.5"><Skeleton className="h-4 w-24 rounded-md" /></td>
+                    <td className="px-6 py-3.5"><Skeleton className="h-4 w-28 rounded-md" /></td>
                   </tr>
                 ))
               ) : recentScans.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-[14px] text-muted-foreground">No scans recorded yet</td>
+                  <td colSpan={4} className="px-6 py-16 text-center text-[14px] text-muted-foreground">No scans recorded yet</td>
                 </tr>
               ) : (
                 recentScans.map((scan) => (
-                  <tr key={scan.id} className="border-b border-border/50 last:border-0 hover:bg-accent/50 transition-colors">
+                  <tr key={scan.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors duration-150">
                     <td className="px-6 py-3.5 text-[13px] font-mono font-medium text-foreground">{scan.batch_id}</td>
                     <td className="px-6 py-3.5">
                       <Badge variant="outline" className={`text-[11px] font-medium capitalize rounded-full px-2.5 py-0.5 ${statusBadgeClass[scan.verification_status]}`}>

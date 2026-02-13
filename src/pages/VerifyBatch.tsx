@@ -14,9 +14,9 @@ import { shortenAddress } from '@/lib/wallet';
 import type { Batch, VerificationResult } from '@/types';
 
 const statusConfig: Record<VerificationResult, { icon: React.ElementType; label: string; color: string; bg: string; glow: string }> = {
-  authentic: { icon: CheckCircle, label: 'Authentic', color: 'text-success', bg: 'bg-success/5 border-success/20', glow: 'glow-success' },
-  suspicious: { icon: AlertTriangle, label: 'Suspicious', color: 'text-warning', bg: 'bg-warning/5 border-warning/20', glow: 'glow-warning' },
-  not_found: { icon: XCircle, label: 'Not Found', color: 'text-destructive', bg: 'bg-destructive/5 border-destructive/20', glow: 'glow-destructive' },
+  authentic: { icon: CheckCircle, label: 'Authentic', color: 'text-success', bg: 'bg-success/[0.04] border-success/20', glow: 'glow-success' },
+  suspicious: { icon: AlertTriangle, label: 'Suspicious', color: 'text-warning', bg: 'bg-warning/[0.04] border-warning/20', glow: 'glow-warning' },
+  not_found: { icon: XCircle, label: 'Not Found', color: 'text-destructive', bg: 'bg-destructive/[0.04] border-destructive/20', glow: 'glow-destructive' },
 };
 
 export default function VerifyBatch() {
@@ -91,7 +91,6 @@ export default function VerifyBatch() {
     try {
       const loc = await getLocation();
 
-      // Step 1: Verify on blockchain
       if (isBlockchainConfigured()) {
         setVerifyStatus('Querying blockchain...');
         const chainResult = await verifyBatchOnChain(batchId);
@@ -105,7 +104,6 @@ export default function VerifyBatch() {
           setChainOwner(chainResult.currentOwner || null);
           setChainIpfsHash(chainResult.ipfsHash || null);
 
-          // Step 2: Fetch IPFS metadata
           if (chainResult.ipfsHash) {
             setVerifyStatus('Fetching IPFS metadata...');
             const ipfsData = await fetchFromIPFS(chainResult.ipfsHash);
@@ -114,7 +112,6 @@ export default function VerifyBatch() {
         }
       }
 
-      // Step 3: Also check Supabase for additional data
       setVerifyStatus('Checking database...');
       const { data: batch } = await supabase.from('batches').select('*').eq('batch_id', batchId).maybeSingle();
       if (!batch && !chainOwner) {
@@ -126,7 +123,6 @@ export default function VerifyBatch() {
 
       if (batch) setBatchInfo(batch as unknown as Batch);
 
-      // Step 4: Run anomaly detection
       setVerifyStatus('Running anomaly detection...');
       const assessment = await detectAnomalies(batchId, loc?.lat ?? null, loc?.lng ?? null);
       const status: VerificationResult = assessment.isSuspicious ? 'suspicious' : 'authentic';
@@ -182,12 +178,13 @@ export default function VerifyBatch() {
 
   return (
     <main className="container max-w-lg py-10 animate-fade-in">
+      {/* Header */}
       <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 glow-primary">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/[0.07]">
           <ScanLine className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Verify Batch</h1>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground">Verify Batch</h1>
           <p className="text-[13px] text-muted-foreground">Blockchain-verified authenticity check</p>
         </div>
       </div>
@@ -195,45 +192,54 @@ export default function VerifyBatch() {
       <div className="flex flex-col gap-4">
         {/* Scanner Card */}
         <div className="apple-card p-6">
-          <div id="qr-reader" ref={scannerRef} className={scanning ? 'rounded-xl overflow-hidden mb-4' : 'hidden'} />
+          <div
+            id="qr-reader"
+            ref={scannerRef}
+            className={scanning ? 'rounded-2xl overflow-hidden mb-4 apple-shadow' : 'hidden'}
+          />
           {!scanning ? (
-            <Button onClick={startScanner} className="w-full h-12 rounded-xl text-[14px] font-medium glow-primary">
-              <Camera className="h-4 w-4 mr-2" /> Open Camera Scanner
+            <Button onClick={startScanner} className="w-full h-12 rounded-xl text-[14px] font-medium glow-primary gap-2">
+              <Camera className="h-4 w-4" /> Open Camera Scanner
             </Button>
           ) : (
-            <Button variant="outline" onClick={stopScanner} className="w-full h-12 rounded-xl text-[14px] font-medium border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive">
+            <Button variant="outline" onClick={stopScanner} className="w-full h-12 rounded-xl text-[14px] font-medium border-destructive/20 text-destructive hover:bg-destructive/5">
               Stop Scanner
             </Button>
           )}
 
-          <div className="relative my-5">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
-            <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
+            <div className="relative flex justify-center text-[11px] uppercase tracking-[0.08em]">
               <span className="bg-card px-3 text-muted-foreground font-medium">or enter manually</span>
             </div>
           </div>
 
           <form onSubmit={handleManualVerify} className="flex gap-2">
-            <Input placeholder="Enter Batch ID" value={manualId} onChange={(e) => setManualId(e.target.value)} className="h-11 rounded-xl text-[14px] flex-1" />
+            <Input
+              placeholder="Enter Batch ID"
+              value={manualId}
+              onChange={(e) => setManualId(e.target.value)}
+              className="h-11 rounded-xl text-[14px] flex-1 bg-muted/50 border-border focus:bg-card"
+            />
             <Button type="submit" disabled={loading} className="h-11 rounded-xl px-5">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             </Button>
           </form>
         </div>
 
-        {/* Status indicator during verification */}
+        {/* Progress indicator */}
         {verifyStatus && (
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10 animate-fade-in">
+          <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-muted/50 border border-border animate-fade-in">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <span className="text-[13px] text-primary font-medium">{verifyStatus}</span>
+            <span className="text-[13px] text-muted-foreground font-medium">{verifyStatus}</span>
           </div>
         )}
 
         {/* Result Card */}
         {result && StatusIcon && (
-          <div className={`apple-card border-2 p-6 flex flex-col items-center gap-4 animate-scale-in ${statusConfig[result].bg} ${statusConfig[result].glow}`}>
-            <StatusIcon className={`h-14 w-14 ${statusConfig[result].color}`} />
-            <Badge className={`text-[14px] px-4 py-1.5 rounded-full font-semibold ${
+          <div className={`apple-card border p-8 flex flex-col items-center gap-5 animate-scale-in ${statusConfig[result].bg} ${statusConfig[result].glow}`}>
+            <StatusIcon className={`h-16 w-16 ${statusConfig[result].color}`} />
+            <Badge className={`text-[15px] px-5 py-2 rounded-full font-semibold ${
               result === 'authentic' ? 'bg-success text-success-foreground' :
               result === 'suspicious' ? 'bg-warning text-warning-foreground' :
               'bg-destructive text-destructive-foreground'
@@ -242,9 +248,9 @@ export default function VerifyBatch() {
             </Badge>
             <p className="font-mono text-[13px] text-muted-foreground">{scannedId}</p>
 
-            {/* Blockchain Owner */}
+            {/* On-chain owner */}
             {chainOwner && (
-              <div className="w-full flex items-center gap-2 p-3 rounded-xl bg-accent/50">
+              <div className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border">
                 <Wallet className="h-4 w-4 text-primary shrink-0" />
                 <div className="min-w-0">
                   <p className="text-[11px] text-muted-foreground">Current Owner (on-chain)</p>
@@ -255,7 +261,7 @@ export default function VerifyBatch() {
 
             {/* IPFS Hash */}
             {chainIpfsHash && (
-              <div className="w-full flex items-center gap-2 p-3 rounded-xl bg-accent/50">
+              <div className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border">
                 <LinkIcon className="h-4 w-4 text-primary shrink-0" />
                 <div className="min-w-0">
                   <p className="text-[11px] text-muted-foreground">IPFS Metadata</p>
@@ -273,8 +279,7 @@ export default function VerifyBatch() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[12px] font-medium text-muted-foreground">Risk Score</span>
                   <Badge variant="outline" className={`text-[10px] rounded-full px-2 py-0 capitalize ${
-                    risk.riskLevel === 'critical' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                    risk.riskLevel === 'high' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                    risk.riskLevel === 'critical' || risk.riskLevel === 'high' ? 'bg-destructive/10 text-destructive border-destructive/20' :
                     risk.riskLevel === 'medium' ? 'bg-warning/10 text-warning border-warning/20' :
                     'bg-success/10 text-success border-success/20'
                   }`}>
@@ -289,7 +294,7 @@ export default function VerifyBatch() {
             {risk && risk.flags.length > 0 && (
               <div className="w-full flex flex-col gap-1.5">
                 {risk.flags.map((flag, i) => (
-                  <div key={i} className="text-[13px] text-warning bg-warning/5 border border-warning/15 rounded-xl px-4 py-2.5 flex items-start gap-2">
+                  <div key={i} className="text-[13px] text-warning bg-warning/[0.04] border border-warning/15 rounded-xl px-4 py-2.5 flex items-start gap-2.5">
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>{flag}</span>
                   </div>
@@ -299,7 +304,7 @@ export default function VerifyBatch() {
           </div>
         )}
 
-        {/* IPFS Metadata (from blockchain) */}
+        {/* IPFS Metadata Card */}
         {ipfsMetadata && result === 'authentic' && (
           <div className="apple-card p-6 animate-fade-in">
             <div className="flex items-center gap-2 mb-4">
@@ -361,7 +366,7 @@ export default function VerifyBatch() {
 
 function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-2 p-3 rounded-xl bg-accent/50">
+    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/50">
       <Icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
       <div>
         <p className="text-[11px] text-muted-foreground">{label}</p>
