@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { generateBatchHash, registerBatchOnChain, isBlockchainConfigured } from '@/lib/blockchain';
+import { uploadToIPFS, type BatchMetadata } from '@/lib/ipfs';
 import QRCode from 'qrcode';
-import { Package, Download, Loader2, CheckCircle, Pill, Calendar, Globe } from 'lucide-react';
+import { Package, Download, Loader2, CheckCircle, Pill, Calendar, Globe, Link as LinkIcon } from 'lucide-react';
 
 export default function RegisterBatch() {
   const { user, walletAddress, demoMode } = useAuth();
@@ -19,23 +20,58 @@ export default function RegisterBatch() {
   const [manufacturingDate, setManufacturingDate] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [lastBatchId, setLastBatchId] = useState('');
+  const [lastIpfsHash, setLastIpfsHash] = useState<string | null>(null);
+  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!batchId.trim() || !manufacturer.trim()) return;
     setLoading(true);
+    setStatus('');
+    setLastIpfsHash(null);
+    setLastTxHash(null);
 
     try {
-      const batchHash = await generateBatchHash(batchId, manufacturer);
+      // Step 1: Upload metadata to IPFS via Pinata
+      setStatus('Uploading metadata to IPFS...');
+      const metadata: BatchMetadata = {
+        batchId,
+        medicineName: medicineName || 'N/A',
+        manufacturer,
+        expiryDate: expiryDate || 'N/A',
+        manufacturingDate: manufacturingDate || 'N/A',
+        dosage: dosage || 'N/A',
+        countryOrigin: countryOfOrigin || 'N/A',
+      };
+
+      const ipfsHash = await uploadToIPFS(metadata);
+      if (ipfsHash) {
+        setLastIpfsHash(ipfsHash);
+        toast.success('Metadata uploaded to IPFS');
+      } else {
+        toast.info('IPFS upload skipped — using local hash fallback');
+      }
+
+      // Step 2: Register on blockchain with IPFS hash
+      const batchHash = ipfsHash || await generateBatchHash(batchId, manufacturer);
       let txHash: string | null = null;
 
       if (isBlockchainConfigured()) {
-        txHash = await registerBatchOnChain(batchId, manufacturer, batchHash);
-        if (!txHash) toast.info('Blockchain unavailable, using Supabase fallback');
+        setStatus('Registering on blockchain...');
+        txHash = await registerBatchOnChain(batchId, batchHash);
+        if (txHash) {
+          setLastTxHash(txHash);
+          toast.success('Batch registered on blockchain');
+        } else {
+          toast.info('Blockchain unavailable, using Supabase fallback');
+        }
       }
 
+      // Step 3: Save to Supabase
+      setStatus('Saving to database...');
       if (!demoMode && user) {
         const { error } = await supabase.from('batches').insert({
           batch_id: batchId,
@@ -51,17 +87,29 @@ export default function RegisterBatch() {
         });
         if (error) throw error;
 
-        // Log audit event
         await supabase.from('audit_logs').insert({
           action: 'batch_registered',
           entity_type: 'batch',
           entity_id: batchId,
           actor_id: user.id,
           actor_wallet: walletAddress,
-          details: { manufacturer, medicine_name: medicineName, tx_hash: txHash },
+          details: { manufacturer, medicine_name: medicineName, tx_hash: txHash, ipfs_hash: ipfsHash },
+        });
+
+        // Add initial supply chain event
+        await supabase.from('supply_chain_events').insert({
+          batch_id: batchId,
+          event_type: 'manufactured',
+          from_wallet: null,
+          to_wallet: walletAddress,
+          actor_id: user.id,
+          location: countryOfOrigin || null,
+          notes: `Batch registered by ${manufacturer}`,
         });
       }
 
+      // Step 4: Generate QR
+      setStatus('Generating QR code...');
       const qr = await QRCode.toDataURL(batchId, {
         width: 300,
         margin: 2,
@@ -69,6 +117,7 @@ export default function RegisterBatch() {
       });
       setQrDataUrl(qr);
       setLastBatchId(batchId);
+      setStatus('');
       toast.success(`Batch ${batchId} registered successfully!`);
       setBatchId('');
       setManufacturer('');
@@ -79,6 +128,7 @@ export default function RegisterBatch() {
       setExpiryDate('');
     } catch (err: any) {
       toast.error(err.message || 'Registration failed');
+      setStatus('');
     } finally {
       setLoading(false);
     }
@@ -101,7 +151,7 @@ export default function RegisterBatch() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Register Batch</h1>
-            <p className="text-[13px] text-muted-foreground">Register a new drug batch with full metadata</p>
+            <p className="text-[13px] text-muted-foreground">Register on IPFS + Blockchain with full metadata</p>
           </div>
         </div>
       </div>
@@ -162,16 +212,23 @@ export default function RegisterBatch() {
               <Input id="country" placeholder="e.g. United States" value={countryOfOrigin} onChange={(e) => setCountryOfOrigin(e.target.value)} className="h-11 rounded-xl text-[14px]" />
             </div>
 
+            {status && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-[13px] text-primary font-medium">{status}</span>
+              </div>
+            )}
+
             <Button type="submit" className="w-full h-11 rounded-xl text-[14px] font-medium mt-1 glow-primary" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Register Batch'}
             </Button>
             {!isBlockchainConfigured() && (
-              <p className="text-[11px] text-muted-foreground text-center">No blockchain configured — data stored in Supabase</p>
+              <p className="text-[11px] text-muted-foreground text-center">No blockchain configured — data stored in Supabase + IPFS</p>
             )}
           </form>
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 flex flex-col gap-4">
           {qrDataUrl ? (
             <div className="apple-card p-6 flex flex-col items-center gap-4 animate-scale-in border-success/20 glow-success">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
@@ -194,6 +251,45 @@ export default function RegisterBatch() {
               </div>
               <p className="text-[14px] text-muted-foreground font-medium">No QR code yet</p>
               <p className="text-[12px] text-muted-foreground/60 mt-1">Register a batch to generate its QR code</p>
+            </div>
+          )}
+
+          {/* IPFS + Blockchain Status */}
+          {(lastIpfsHash || lastTxHash) && (
+            <div className="apple-card p-5 flex flex-col gap-3 animate-fade-in">
+              <h3 className="text-[13px] font-semibold text-foreground">On-Chain Details</h3>
+              {lastIpfsHash && (
+                <div className="flex items-start gap-2">
+                  <LinkIcon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-muted-foreground">IPFS Hash</p>
+                    <a
+                      href={`https://gateway.pinata.cloud/ipfs/${lastIpfsHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[12px] font-mono text-primary hover:underline break-all"
+                    >
+                      {lastIpfsHash}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {lastTxHash && (
+                <div className="flex items-start gap-2">
+                  <LinkIcon className="h-4 w-4 text-success mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-muted-foreground">Transaction Hash</p>
+                    <a
+                      href={`https://amoy.polygonscan.com/tx/${lastTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[12px] font-mono text-primary hover:underline break-all"
+                    >
+                      {lastTxHash}
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

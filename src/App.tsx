@@ -17,6 +17,7 @@ import Settings from "./pages/Settings";
 import Alerts from "./pages/Alerts";
 import AuditLogs from "./pages/AuditLogs";
 import SupplyChain from "./pages/SupplyChain";
+import TransferOwnership from "./pages/TransferOwnership";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><AuditLogs /></ProtectedRoute>} />
             <Route path="/supply-chain" element={<ProtectedRoute><SupplyChain /></ProtectedRoute>} />
+            <Route path="/transfer" element={<ProtectedRoute><TransferOwnership /></ProtectedRoute>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
