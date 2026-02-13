@@ -24,7 +24,6 @@ export default function Login() {
   const isConnected = !!walletAddress && !!user;
   const hasRole = roles.length > 0;
 
-  // Auto-redirect if already connected with a role
   useEffect(() => {
     if (!loading && isConnected && hasRole) {
       const targetPath = roleRedirectMap[roles[0]] || '/';
@@ -46,7 +45,7 @@ export default function Login() {
       });
       if (error) {
         if (error.code === '23505') {
-          // Duplicate — user already has this role, just redirect
+          // Duplicate — user already has this role
         } else {
           throw error;
         }
@@ -71,20 +70,20 @@ export default function Login() {
 
   return (
     <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4 relative">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-      
+      <div className="absolute inset-0 bg-gradient-to-b from-background to-muted/20 pointer-events-none" />
+
       <div className="w-full max-w-sm animate-scale-in relative z-10">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary glow-primary">
             <Shield className="h-7 w-7 text-primary-foreground" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-[20px] font-bold tracking-tight text-foreground">
             {isConnected ? 'Select Your Role' : 'Connect Wallet'}
           </h1>
           <p className="mt-1.5 text-[13px] text-muted-foreground">
             {isConnected
               ? "Choose how you'll use PharmaShield"
-              : 'Sign in with your Web3 wallet'}
+              : 'Sign in with your MetaMask wallet'}
           </p>
         </div>
 
@@ -112,7 +111,7 @@ export default function Login() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-success/5 border border-success/20">
+              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-success/[0.04] border border-success/20">
                 <CheckCircle className="h-5 w-5 text-success shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-foreground">Wallet Connected</p>
