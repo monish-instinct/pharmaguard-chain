@@ -91,22 +91,22 @@ export default function SafetyFeed() {
       <div className="container max-w-2xl py-8">
         <div className="flex flex-col gap-5">
           {/* Community Stats */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="apple-card p-4 text-center">
-              <p className="text-[20px] font-bold text-foreground">{stats.totalScans}</p>
-              <p className="text-[10px] text-muted-foreground font-medium">Scans</p>
+              <p className="text-[22px] font-bold text-foreground">{stats.totalScans}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Scans</p>
             </div>
             <div className="apple-card p-4 text-center">
-              <p className="text-[20px] font-bold text-success">{stats.safeRate}%</p>
-              <p className="text-[10px] text-muted-foreground font-medium">Safe Rate</p>
+              <p className="text-[22px] font-bold text-success">{stats.safeRate}%</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Safe Rate</p>
             </div>
             <div className="apple-card p-4 text-center">
-              <p className="text-[20px] font-bold text-warning">{stats.reports}</p>
-              <p className="text-[10px] text-muted-foreground font-medium">Reports</p>
+              <p className="text-[22px] font-bold text-warning">{stats.reports}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Reports</p>
             </div>
             <div className="apple-card p-4 text-center">
-              <p className="text-[20px] font-bold text-destructive">{stats.recalls}</p>
-              <p className="text-[10px] text-muted-foreground font-medium">Recalls</p>
+              <p className="text-[22px] font-bold text-destructive">{stats.recalls}</p>
+              <p className="text-[11px] text-muted-foreground font-medium">Recalls</p>
             </div>
           </div>
 
