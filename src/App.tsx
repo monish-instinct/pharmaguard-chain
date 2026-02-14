@@ -2,9 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -36,6 +38,55 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function AppLayout() {
+  const { activeRole } = useAuth();
+  const location = useLocation();
+  const isLanding = location.pathname === '/' && !activeRole;
+  const isConsumerPage = (location.pathname === '/consumer' || location.pathname === '/report') && !activeRole;
+  const showSidebar = !isLanding && !isConsumerPage;
+
+  return (
+    <SidebarProvider defaultOpen={true}>
+      <div className="min-h-screen flex w-full">
+        {showSidebar && <AppSidebar />}
+        <div className="flex-1 flex flex-col min-w-0">
+          <Navbar />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/home" element={<ProtectedRoute><RoleDashboard /></ProtectedRoute>} />
+              <Route path="/consumer" element={<ConsumerVerify />} />
+              <Route path="/report" element={<ReportIssue />} />
+              <Route path="/my-safety" element={<ProtectedRoute><ConsumerHistory /></ProtectedRoute>} />
+              <Route path="/cabinet" element={<ProtectedRoute><MedicineCabinet /></ProtectedRoute>} />
+              <Route path="/safety-feed" element={<SafetyFeed />} />
+              <Route path="/reviews" element={<MedicineReviews />} />
+              <Route path="/family" element={<ProtectedRoute><FamilyMembers /></ProtectedRoute>} />
+              <Route path="/health-tips" element={<HealthTips />} />
+              <Route path="/register" element={<ProtectedRoute allowedRoles={['manufacturer']}><RegisterBatch /></ProtectedRoute>} />
+              <Route path="/batches" element={<ProtectedRoute><MyBatches /></ProtectedRoute>} />
+              <Route path="/verify" element={<VerifyBatch />} />
+              <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['regulator']}><Dashboard /></ProtectedRoute>} />
+              <Route path="/logs" element={<ProtectedRoute><ScanLogs /></ProtectedRoute>} />
+              <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
+              <Route path="/audit" element={<ProtectedRoute><AuditLogs /></ProtectedRoute>} />
+              <Route path="/supply-chain" element={<ProtectedRoute><SupplyChain /></ProtectedRoute>} />
+              <Route path="/transfer" element={<ProtectedRoute><TransferOwnership /></ProtectedRoute>} />
+              <Route path="/recall" element={<ProtectedRoute allowedRoles={['manufacturer', 'regulator']}><RecallBatch /></ProtectedRoute>} />
+              <Route path="/trust" element={<ProtectedRoute><TrustScores /></ProtectedRoute>} />
+              <Route path="/search" element={<ProtectedRoute><GlobalSearch /></ProtectedRoute>} />
+              <Route path="/feed" element={<ProtectedRoute><BlockchainFeed /></ProtectedRoute>} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
   <QueryClientProvider client={queryClient}>
@@ -44,35 +95,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/home" element={<ProtectedRoute><RoleDashboard /></ProtectedRoute>} />
-            <Route path="/consumer" element={<ConsumerVerify />} />
-            <Route path="/report" element={<ReportIssue />} />
-            <Route path="/my-safety" element={<ProtectedRoute><ConsumerHistory /></ProtectedRoute>} />
-            <Route path="/cabinet" element={<ProtectedRoute><MedicineCabinet /></ProtectedRoute>} />
-            <Route path="/safety-feed" element={<SafetyFeed />} />
-            <Route path="/reviews" element={<MedicineReviews />} />
-            <Route path="/family" element={<ProtectedRoute><FamilyMembers /></ProtectedRoute>} />
-            <Route path="/health-tips" element={<HealthTips />} />
-            <Route path="/register" element={<ProtectedRoute allowedRoles={['manufacturer']}><RegisterBatch /></ProtectedRoute>} />
-            <Route path="/batches" element={<ProtectedRoute><MyBatches /></ProtectedRoute>} />
-            <Route path="/verify" element={<VerifyBatch />} />
-            <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['regulator']}><Dashboard /></ProtectedRoute>} />
-            <Route path="/logs" element={<ProtectedRoute><ScanLogs /></ProtectedRoute>} />
-            <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
-            <Route path="/audit" element={<ProtectedRoute><AuditLogs /></ProtectedRoute>} />
-            <Route path="/supply-chain" element={<ProtectedRoute><SupplyChain /></ProtectedRoute>} />
-            <Route path="/transfer" element={<ProtectedRoute><TransferOwnership /></ProtectedRoute>} />
-            <Route path="/recall" element={<ProtectedRoute allowedRoles={['manufacturer', 'regulator']}><RecallBatch /></ProtectedRoute>} />
-            <Route path="/trust" element={<ProtectedRoute><TrustScores /></ProtectedRoute>} />
-            <Route path="/search" element={<ProtectedRoute><GlobalSearch /></ProtectedRoute>} />
-            <Route path="/feed" element={<ProtectedRoute><BlockchainFeed /></ProtectedRoute>} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppLayout />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
