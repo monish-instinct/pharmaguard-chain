@@ -300,25 +300,74 @@ function PharmacyDashboard() {
 /* ═══ CONSUMER DASHBOARD ═══ */
 
 function ConsumerDashboard() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState({ scans: 0, safe: 0, suspicious: 0, reports: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetch = async () => {
+      const [{ data: scans }, { count: reportCount }] = await Promise.all([
+        supabase.from('scan_logs').select('*').eq('scanner_user_id', user.id).limit(100),
+        supabase.from('consumer_reports').select('*', { count: 'exact', head: true }).eq('reporter_id', user.id),
+      ]);
+      const scanData = scans || [];
+      setStats({
+        scans: scanData.length,
+        safe: scanData.filter((s: any) => s.verification_status === 'authentic').length,
+        suspicious: scanData.filter((s: any) => s.verification_status === 'suspicious').length,
+        reports: reportCount || 0,
+      });
+      setLoading(false);
+    };
+    fetch();
+  }, [user]);
+
+  const contributor = stats.safe >= 50 ? 'Guardian 🛡️' : stats.safe >= 25 ? 'Protector ✨' : stats.safe >= 10 ? 'Watchdog 👁️' : 'Newcomer 🌱';
+
   return (
     <>
-      <div className="apple-card p-8 mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/[0.07]">
-          <Shield className="h-7 w-7 text-primary" />
+      {/* CTA Card */}
+      <div className="apple-card p-8 mb-6 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/[0.07]">
+          <Shield className="h-8 w-8 text-primary" />
         </div>
-        <h2 className="text-[20px] font-bold text-foreground mb-2">Verify Your Medicine</h2>
+        <h2 className="text-[22px] font-bold text-foreground mb-2">Your Medicine Safety Hub</h2>
         <p className="text-[14px] text-muted-foreground max-w-sm mx-auto mb-6">
-          Scan the QR code on your medicine packaging to instantly verify its authenticity and view its full supply chain history.
+          Scan medicines to check safety, track your history, and help protect others by reporting issues.
         </p>
         <Link to="/consumer">
           <Button size="lg" className="rounded-full px-8 h-12 text-[14px] font-semibold glow-primary gap-2">
-            <ScanLine className="h-4 w-4" /> Open Scanner
+            <ScanLine className="h-4 w-4" /> Check Medicine Safety
           </Button>
         </Link>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <QuickAction icon={ScanLine} title="Verify Medicine" description="Scan QR code to check authenticity" path="/consumer" />
-        <QuickAction icon={Flag} title="Report Issue" description="Report suspicious medicine" path="/report" accent="bg-warning/[0.06] text-warning" />
+
+      {/* Stats */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-6">
+        <StatCard label="Medicines Checked" value={stats.scans} icon={ScanLine} accent="bg-primary/[0.07] text-primary" loading={loading} />
+        <StatCard label="Safe" value={stats.safe} icon={CheckCircle} accent="bg-success/10 text-success" loading={loading} />
+        <StatCard label="Caution" value={stats.suspicious} icon={AlertTriangle} accent="bg-warning/10 text-warning" loading={loading} />
+        <StatCard label="Reports Filed" value={stats.reports} icon={Flag} accent="bg-destructive/10 text-destructive" loading={loading} />
+      </div>
+
+      {/* Trust Contributor */}
+      <div className="apple-card p-5 mb-6 flex items-center gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.07]">
+          <Star className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">Trust Contributor</p>
+          <p className="text-[16px] font-bold text-foreground">{contributor}</p>
+          <p className="text-[12px] text-muted-foreground">{stats.safe} safe medicines verified</p>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <QuickAction icon={ScanLine} title="Verify Medicine" description="Scan QR to check safety" path="/consumer" />
+        <QuickAction icon={Activity} title="My Safety History" description="View all your scans & reports" path="/my-safety" />
+        <QuickAction icon={Flag} title="Report Issue" description="Flag suspicious medicine" path="/report" accent="bg-warning/[0.06] text-warning" />
       </div>
     </>
   );
