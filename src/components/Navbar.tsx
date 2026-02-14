@@ -36,6 +36,7 @@ const roleNavItems: Record<AppRole, { label: string; path: string }[]> = {
   consumer: [
     { label: 'Home', path: '/home' },
     { label: 'Verify', path: '/consumer' },
+    { label: 'My Safety', path: '/my-safety' },
     { label: 'Report', path: '/report' },
   ],
   regulator: [

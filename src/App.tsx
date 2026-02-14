@@ -25,6 +25,7 @@ import TrustScores from "./pages/TrustScores";
 import GlobalSearch from "./pages/GlobalSearch";
 import BlockchainFeed from "./pages/BlockchainFeed";
 import ReportIssue from "./pages/ReportIssue";
+import ConsumerHistory from "./pages/ConsumerHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/home" element={<ProtectedRoute><RoleDashboard /></ProtectedRoute>} />
             <Route path="/consumer" element={<ConsumerVerify />} />
             <Route path="/report" element={<ReportIssue />} />
+            <Route path="/my-safety" element={<ProtectedRoute><ConsumerHistory /></ProtectedRoute>} />
             <Route path="/register" element={<ProtectedRoute allowedRoles={['manufacturer']}><RegisterBatch /></ProtectedRoute>} />
             <Route path="/batches" element={<ProtectedRoute><MyBatches /></ProtectedRoute>} />
             <Route path="/verify" element={<VerifyBatch />} />
