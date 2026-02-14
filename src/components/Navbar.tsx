@@ -3,9 +3,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, FlaskConical, Settings, Menu, X, Wallet, Bell, Wifi, Search, Sparkles } from 'lucide-react';
+import { LogOut, FlaskConical, Settings, Menu, X, Wallet, Bell, Wifi, Search, Sparkles, Sun, Moon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import { shortenAddress } from '@/lib/wallet';
 import { isOnSepolia, switchToSepolia, isBlockchainConfigured } from '@/lib/blockchain';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,6 +78,7 @@ const roleLabels: Record<AppRole, string> = {
 
 export function Navbar() {
   const { activeRole, demoMode, demoRole, setDemoMode, setDemoRole, user, walletAddress, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
@@ -294,6 +296,39 @@ export function Navbar() {
                 </Button>
               </motion.div>
 
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="hidden md:inline-flex h-8 w-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/60 overflow-hidden"
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    {theme === 'dark' ? (
+                      <motion.div
+                        key="sun"
+                        initial={{ y: -20, opacity: 0, rotate: -90 }}
+                        animate={{ y: 0, opacity: 1, rotate: 0 }}
+                        exit={{ y: 20, opacity: 0, rotate: 90 }}
+                        transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                      >
+                        <Sun className="h-3.5 w-3.5" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="moon"
+                        initial={{ y: -20, opacity: 0, rotate: 90 }}
+                        animate={{ y: 0, opacity: 1, rotate: 0 }}
+                        exit={{ y: 20, opacity: 0, rotate: -90 }}
+                        transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                      >
+                        <Moon className="h-3.5 w-3.5" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </motion.div>
+
               <Link to="/settings" className="hidden md:inline-flex">
                 <motion.div whileHover={{ scale: 1.1, rotate: 45 }} whileTap={{ scale: 0.9 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}>
                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/60">
@@ -383,6 +418,10 @@ export function Navbar() {
               </Link>
               <button onClick={() => { setDemoMode(!demoMode); setMobileOpen(false); }} className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground text-left hover:bg-accent/60 flex items-center gap-2">
                 <FlaskConical className="h-3.5 w-3.5" /> {demoMode ? 'Exit Demo Mode' : 'Enable Demo Mode'}
+              </button>
+              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground text-left hover:bg-accent/60 flex items-center gap-2">
+                {theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
               </button>
               <Link to="/settings" onClick={() => setMobileOpen(false)}>
                 <div className="px-3 py-2.5 rounded-xl text-[14px] font-medium text-muted-foreground hover:bg-accent/60 flex items-center gap-2">
