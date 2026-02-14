@@ -1,16 +1,32 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Star, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { TrustScore } from '@/types';
 
+const DEMO_SCORES: TrustScore[] = [
+  { id: '1', manufacturer_id: '1', manufacturer_name: 'PharmaCorp Inc.', score: 92, total_batches: 24, verified_count: 187, suspicious_count: 3, complaint_count: 1, updated_at: new Date().toISOString() },
+  { id: '2', manufacturer_id: '2', manufacturer_name: 'MedLife Labs', score: 78, total_batches: 15, verified_count: 98, suspicious_count: 12, complaint_count: 4, updated_at: new Date().toISOString() },
+  { id: '3', manufacturer_id: '3', manufacturer_name: 'HealthGen SA', score: 85, total_batches: 31, verified_count: 220, suspicious_count: 8, complaint_count: 2, updated_at: new Date().toISOString() },
+  { id: '4', manufacturer_id: '4', manufacturer_name: 'BioPharm Ltd', score: 54, total_batches: 8, verified_count: 32, suspicious_count: 18, complaint_count: 7, updated_at: new Date().toISOString() },
+  { id: '5', manufacturer_id: '5', manufacturer_name: 'NovaMed Group', score: 96, total_batches: 42, verified_count: 380, suspicious_count: 1, complaint_count: 0, updated_at: new Date().toISOString() },
+  { id: '6', manufacturer_id: '6', manufacturer_name: 'GenRx Pharma', score: 67, total_batches: 12, verified_count: 65, suspicious_count: 15, complaint_count: 5, updated_at: new Date().toISOString() },
+];
+
 export default function TrustScores() {
+  const { demoMode } = useAuth();
   const [scores, setScores] = useState<TrustScore[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (demoMode) {
+      setScores(DEMO_SCORES);
+      setLoading(false);
+      return;
+    }
+
     const fetchScores = async () => {
-      // Compute trust scores from batches and scan data
       const { data: batches } = await supabase.from('batches').select('manufacturer_name, registered_by, batch_id').limit(500);
       if (!batches || batches.length === 0) {
         setLoading(false);
@@ -28,7 +44,6 @@ export default function TrustScores() {
 
       const computed: TrustScore[] = [];
       for (const [, mfr] of Object.entries(manufacturers)) {
-        // Count suspicious scans for this manufacturer's batches
         let suspiciousCount = 0;
         let verifiedCount = 0;
         for (const bId of mfr.batches) {
@@ -47,7 +62,6 @@ export default function TrustScores() {
         const suspiciousRate = totalScans > 0 ? suspiciousCount / totalScans : 0;
         const complaintRate = mfr.batches.length > 0 ? (complaintCount || 0) / mfr.batches.length : 0;
 
-        // Score: start at 100, deduct for suspicious rate and complaints
         let score = 100;
         score -= Math.round(suspiciousRate * 50);
         score -= Math.round(complaintRate * 30);
@@ -71,7 +85,7 @@ export default function TrustScores() {
       setLoading(false);
     };
     fetchScores();
-  }, []);
+  }, [demoMode]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-success';
@@ -154,7 +168,6 @@ export default function TrustScores() {
                   </div>
                 </div>
 
-                {/* Score bar */}
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${

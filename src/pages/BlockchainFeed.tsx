@@ -40,7 +40,6 @@ export default function BlockchainFeed() {
     };
     fetchEvents();
 
-    // Real-time subscription
     const channel = supabase
       .channel('audit-feed')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, (payload) => {
@@ -52,7 +51,7 @@ export default function BlockchainFeed() {
   }, []);
 
   return (
-    <main className="container max-w-2xl py-10 animate-fade-in">
+    <main className="container max-w-3xl py-10 animate-fade-in">
       <div className="mb-8 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
           <Activity className="h-5 w-5 text-primary" />
@@ -71,10 +70,10 @@ export default function BlockchainFeed() {
         <div className="apple-card flex flex-col items-center justify-center py-16 text-center">
           <Activity className="h-8 w-8 text-muted-foreground/30 mb-3" />
           <p className="text-[15px] font-medium text-muted-foreground">No events yet</p>
+          <p className="text-[13px] text-muted-foreground/60 mt-1">Events will appear here as they happen</p>
         </div>
       ) : (
-        <div className="relative pl-6">
-          <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-border" />
+        <div className="space-y-3">
           {events.map((event) => {
             const Icon = actionIcons[event.action] || Activity;
             const colorClass = actionColors[event.action] || 'bg-muted text-muted-foreground';
@@ -85,23 +84,23 @@ export default function BlockchainFeed() {
               new Date(event.created_at).toLocaleDateString();
 
             return (
-              <div key={event.id} className="relative flex gap-4 pb-4 last:pb-0">
-                <div className={`absolute left-[-16px] flex h-6 w-6 items-center justify-center rounded-full z-10 ${colorClass}`}>
-                  <Icon className="h-3 w-3" />
+              <div key={event.id} className="apple-card p-4 flex items-start gap-3">
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${colorClass}`}>
+                  <Icon className="h-4 w-4" />
                 </div>
-                <div className="flex-1 ml-4 apple-card p-4">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <Badge variant="outline" className={`text-[11px] font-medium rounded-full px-2.5 py-0.5 capitalize ${colorClass} border-transparent`}>
                       {event.action.replace(/_/g, ' ')}
                     </Badge>
-                    <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
+                    <span className="text-[11px] text-muted-foreground shrink-0">{timeAgo}</span>
                   </div>
                   {event.entity_id && (
-                    <p className="text-[13px] font-mono font-medium text-foreground mt-2">{event.entity_id}</p>
+                    <p className="text-[13px] font-mono font-medium text-foreground mt-1.5 truncate">{event.entity_id}</p>
                   )}
                   {event.details && Object.keys(event.details).length > 0 && (
                     <p className="text-[12px] text-muted-foreground mt-1 truncate">
-                      {Object.entries(event.details).filter(([,v]) => v).map(([k, v]) => `${k}: ${v}`).join(' • ')}
+                      {Object.entries(event.details).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(' • ')}
                     </p>
                   )}
                 </div>
