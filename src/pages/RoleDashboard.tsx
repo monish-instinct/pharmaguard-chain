@@ -301,15 +301,17 @@ function PharmacyDashboard() {
 
 function ConsumerDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ scans: 0, safe: 0, suspicious: 0, reports: 0 });
+  const [stats, setStats] = useState({ scans: 0, safe: 0, suspicious: 0, reports: 0, cabinet: 0, reviews: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetch = async () => {
-      const [{ data: scans }, { count: reportCount }] = await Promise.all([
+      const [{ data: scans }, { count: reportCount }, { count: cabinetCount }, { count: reviewCount }] = await Promise.all([
         supabase.from('scan_logs').select('*').eq('scanner_user_id', user.id).limit(100),
         supabase.from('consumer_reports').select('*', { count: 'exact', head: true }).eq('reporter_id', user.id),
+        supabase.from('medicine_cabinet').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('medicine_reviews').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
       ]);
       const scanData = scans || [];
       setStats({
@@ -317,6 +319,8 @@ function ConsumerDashboard() {
         safe: scanData.filter((s: any) => s.verification_status === 'authentic').length,
         suspicious: scanData.filter((s: any) => s.verification_status === 'suspicious').length,
         reports: reportCount || 0,
+        cabinet: cabinetCount || 0,
+        reviews: reviewCount || 0,
       });
       setLoading(false);
     };
@@ -334,7 +338,7 @@ function ConsumerDashboard() {
         </div>
         <h2 className="text-[22px] font-bold text-foreground mb-2">Your Medicine Safety Hub</h2>
         <p className="text-[14px] text-muted-foreground max-w-sm mx-auto mb-6">
-          Scan medicines to check safety, track your history, and help protect others by reporting issues.
+          Scan medicines to check safety, track your history, and help protect others.
         </p>
         <Link to="/consumer">
           <Button size="lg" className="rounded-full px-8 h-12 text-[14px] font-semibold glow-primary gap-2">
@@ -344,11 +348,13 @@ function ConsumerDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-3 mb-6">
         <StatCard label="Medicines Checked" value={stats.scans} icon={ScanLine} accent="bg-primary/[0.07] text-primary" loading={loading} />
         <StatCard label="Safe" value={stats.safe} icon={CheckCircle} accent="bg-success/10 text-success" loading={loading} />
         <StatCard label="Caution" value={stats.suspicious} icon={AlertTriangle} accent="bg-warning/10 text-warning" loading={loading} />
         <StatCard label="Reports Filed" value={stats.reports} icon={Flag} accent="bg-destructive/10 text-destructive" loading={loading} />
+        <StatCard label="In Cabinet" value={stats.cabinet} icon={Boxes} accent="bg-primary/[0.07] text-primary" loading={loading} />
+        <StatCard label="Reviews" value={stats.reviews} icon={Star} accent="bg-warning/10 text-warning" loading={loading} />
       </div>
 
       {/* Trust Contributor */}
@@ -363,11 +369,17 @@ function ConsumerDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Quick Actions - 2 columns */}
+      <h2 className="text-[15px] font-semibold text-foreground mb-3">Quick Actions</h2>
+      <div className="grid gap-3 md:grid-cols-2 mb-6">
         <QuickAction icon={ScanLine} title="Verify Medicine" description="Scan QR to check safety" path="/consumer" />
+        <QuickAction icon={Boxes} title="Medicine Cabinet" description="Track your medicines & expiry" path="/cabinet" />
         <QuickAction icon={Activity} title="My Safety History" description="View all your scans & reports" path="/my-safety" />
+        <QuickAction icon={Users} title="Family Safety" description="Track medicines for loved ones" path="/family" accent="bg-success/[0.06] text-success" />
+        <QuickAction icon={Star} title="Medicine Reviews" description="Read & write reviews" path="/reviews" accent="bg-warning/[0.06] text-warning" />
+        <QuickAction icon={Globe} title="Community Feed" description="Real-time safety activity" path="/safety-feed" />
         <QuickAction icon={Flag} title="Report Issue" description="Flag suspicious medicine" path="/report" accent="bg-warning/[0.06] text-warning" />
+        <QuickAction icon={BarChart3} title="Health & Safety Tips" description="Essential medicine knowledge" path="/health-tips" accent="bg-success/[0.06] text-success" />
       </div>
     </>
   );

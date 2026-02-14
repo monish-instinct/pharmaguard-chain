@@ -197,6 +197,138 @@ export type Database = {
         }
         Relationships: []
       }
+      family_members: {
+        Row: {
+          avatar_emoji: string | null
+          created_at: string
+          date_of_birth: string | null
+          id: string
+          name: string
+          notes: string | null
+          relationship: string
+          user_id: string
+        }
+        Insert: {
+          avatar_emoji?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          relationship?: string
+          user_id: string
+        }
+        Update: {
+          avatar_emoji?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          relationship?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      medicine_cabinet: {
+        Row: {
+          added_at: string
+          batch_id: string
+          dosage: string | null
+          expiry_date: string | null
+          family_member_id: string | null
+          id: string
+          manufacturer_name: string | null
+          medicine_name: string | null
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          batch_id: string
+          dosage?: string | null
+          expiry_date?: string | null
+          family_member_id?: string | null
+          id?: string
+          manufacturer_name?: string | null
+          medicine_name?: string | null
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          batch_id?: string
+          dosage?: string | null
+          expiry_date?: string | null
+          family_member_id?: string | null
+          id?: string
+          manufacturer_name?: string | null
+          medicine_name?: string | null
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      medicine_favorites: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: string
+          medicine_name: string | null
+          user_id: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: string
+          medicine_name?: string | null
+          user_id: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: string
+          medicine_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      medicine_reviews: {
+        Row: {
+          batch_id: string
+          created_at: string
+          helpful_count: number
+          id: string
+          medicine_name: string | null
+          rating: number
+          review_text: string | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          medicine_name?: string | null
+          rating: number
+          review_text?: string | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          medicine_name?: string | null
+          rating?: number
+          review_text?: string | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
