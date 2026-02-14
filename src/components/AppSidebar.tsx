@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { NavLink } from '@/components/NavLink';
@@ -99,6 +99,7 @@ export function AppSidebar() {
   const { theme, setTheme } = useTheme();
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const collapsed = state === 'collapsed';
 
   const navItems = activeRole ? roleNavItems[activeRole] : [];
@@ -231,7 +232,7 @@ export function AppSidebar() {
             <SidebarGroupLabel>Demo Role</SidebarGroupLabel>
             <SidebarGroupContent>
               <div className="px-2">
-                <Select value={demoRole} onValueChange={(v) => setDemoRole(v as AppRole)}>
+                <Select value={demoRole} onValueChange={(v) => { setDemoRole(v as AppRole); navigate('/home'); }}>
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue />
                   </SelectTrigger>
