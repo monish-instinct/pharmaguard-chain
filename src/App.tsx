@@ -26,6 +26,11 @@ import GlobalSearch from "./pages/GlobalSearch";
 import BlockchainFeed from "./pages/BlockchainFeed";
 import ReportIssue from "./pages/ReportIssue";
 import ConsumerHistory from "./pages/ConsumerHistory";
+import MedicineCabinet from "./pages/MedicineCabinet";
+import SafetyFeed from "./pages/SafetyFeed";
+import MedicineReviews from "./pages/MedicineReviews";
+import FamilyMembers from "./pages/FamilyMembers";
+import HealthTips from "./pages/HealthTips";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +50,11 @@ const App = () => (
             <Route path="/consumer" element={<ConsumerVerify />} />
             <Route path="/report" element={<ReportIssue />} />
             <Route path="/my-safety" element={<ProtectedRoute><ConsumerHistory /></ProtectedRoute>} />
+            <Route path="/cabinet" element={<ProtectedRoute><MedicineCabinet /></ProtectedRoute>} />
+            <Route path="/safety-feed" element={<SafetyFeed />} />
+            <Route path="/reviews" element={<MedicineReviews />} />
+            <Route path="/family" element={<ProtectedRoute><FamilyMembers /></ProtectedRoute>} />
+            <Route path="/health-tips" element={<HealthTips />} />
             <Route path="/register" element={<ProtectedRoute allowedRoles={['manufacturer']}><RegisterBatch /></ProtectedRoute>} />
             <Route path="/batches" element={<ProtectedRoute><MyBatches /></ProtectedRoute>} />
             <Route path="/verify" element={<VerifyBatch />} />
