@@ -177,7 +177,7 @@ export default function VerifyBatch() {
   const StatusIcon = result ? statusConfig[result].icon : null;
 
   return (
-    <main className="container max-w-lg py-10 animate-fade-in">
+    <main className="container max-w-lg py-10 px-4 animate-fade-in overflow-x-hidden">
       {/* Header */}
       <div className="mb-8 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/[0.07]">
@@ -237,7 +237,7 @@ export default function VerifyBatch() {
 
         {/* Result Card */}
         {result && StatusIcon && (
-          <div className={`apple-card border p-8 flex flex-col items-center gap-5 animate-scale-in ${statusConfig[result].bg} ${statusConfig[result].glow}`}>
+          <div className={`apple-card border p-6 sm:p-8 flex flex-col items-center gap-5 animate-scale-in ${statusConfig[result].bg} ${statusConfig[result].glow}`}>
             <StatusIcon className={`h-16 w-16 ${statusConfig[result].color}`} />
             <Badge className={`text-[15px] px-5 py-2 rounded-full font-semibold ${
               result === 'authentic' ? 'bg-success text-success-foreground' :
@@ -311,7 +311,7 @@ export default function VerifyBatch() {
               <Shield className="h-4 w-4 text-success" />
               <span className="text-[14px] font-semibold text-foreground">IPFS Verified Details</span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {ipfsMetadata.medicineName && ipfsMetadata.medicineName !== 'N/A' && (
                 <InfoItem icon={Pill} label="Medicine" value={ipfsMetadata.medicineName} />
               )}
@@ -345,7 +345,7 @@ export default function VerifyBatch() {
               <Shield className="h-4 w-4 text-success" />
               <span className="text-[14px] font-semibold text-foreground">Verified Medicine Details</span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {batchInfo.medicine_name && <InfoItem icon={Pill} label="Medicine" value={batchInfo.medicine_name} />}
               {batchInfo.dosage && <InfoItem icon={Package} label="Dosage" value={batchInfo.dosage} />}
               {batchInfo.manufacturer_name && <InfoItem icon={Package} label="Manufacturer" value={batchInfo.manufacturer_name} />}

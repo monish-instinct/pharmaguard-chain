@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ClipboardList, Download } from 'lucide-react';
+import { ClipboardList, Download, MapPin, Clock, AlertTriangle } from 'lucide-react';
 import { downloadCSV } from '@/lib/export';
 import type { ScanLog } from '@/types';
 
@@ -38,9 +38,17 @@ export default function ScanLogs() {
     })), 'scan-logs');
   };
 
+  const formatTime = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return new Date(dateStr).toLocaleDateString();
+  };
+
   return (
-    <main className="container py-10 animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
+    <main className="container max-w-4xl py-10 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 glow-primary">
             <ClipboardList className="h-5 w-5 text-primary" />
@@ -52,7 +60,7 @@ export default function ScanLogs() {
         </div>
         <div className="flex items-center gap-2">
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[140px] h-9 rounded-lg text-[13px]">
+            <SelectTrigger className="w-[130px] h-9 rounded-lg text-[13px]">
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
             <SelectContent>
@@ -68,60 +76,58 @@ export default function ScanLogs() {
         </div>
       </div>
 
-      <div className="apple-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch ID</th>
-                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Anomalies</th>
-                <th className="px-6 py-3 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent">
-                        <ClipboardList className="h-6 w-6 text-muted-foreground/40" />
-                      </div>
-                      <p className="text-[14px] text-muted-foreground font-medium">No scan logs found</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                logs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className={`border-b border-border/50 last:border-0 transition-colors hover:bg-accent/50 ${
-                      log.verification_status === 'suspicious' ? 'bg-warning/[0.03]' : ''
-                    }`}
-                  >
-                    <td className="px-6 py-3.5 text-[13px] font-mono font-medium text-foreground">{log.batch_id}</td>
-                    <td className="px-6 py-3.5">
-                      <Badge variant="outline" className={`text-[11px] font-medium capitalize rounded-full px-2.5 py-0.5 ${statusBadgeClass[log.verification_status]}`}>
-                        {log.verification_status.replace('_', ' ')}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-3.5 text-[13px] text-muted-foreground">
-                      {log.latitude && log.longitude ? `${log.latitude.toFixed(2)}, ${log.longitude.toFixed(2)}` : 'Unknown'}
-                    </td>
-                    <td className="px-6 py-3.5 text-[12px] text-muted-foreground max-w-[200px] truncate">
-                      {log.anomaly_flags && (log.anomaly_flags as string[]).length > 0
-                        ? (log.anomaly_flags as string[]).join('; ')
-                        : '--'}
-                    </td>
-                    <td className="px-6 py-3.5 text-[13px] text-muted-foreground">{new Date(log.scanned_at).toLocaleString()}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {logs.length === 0 ? (
+        <div className="apple-card flex flex-col items-center justify-center py-16 text-center">
+          <ClipboardList className="h-8 w-8 text-muted-foreground/30 mb-3" />
+          <p className="text-[15px] font-medium text-muted-foreground">No scan logs found</p>
+          <p className="text-[13px] text-muted-foreground/60 mt-1">Logs will appear after batch verifications</p>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-2">
+          {logs.map((log) => {
+            const anomalies = (log.anomaly_flags as string[]) || [];
+            return (
+              <div
+                key={log.id}
+                className={`apple-card p-4 flex flex-col sm:flex-row sm:items-center gap-3 ${
+                  log.verification_status === 'suspicious' ? 'border-warning/20' : ''
+                }`}
+              >
+                {/* Batch ID + Status */}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Badge variant="outline" className={`text-[11px] font-medium capitalize rounded-full px-2.5 py-0.5 shrink-0 ${statusBadgeClass[log.verification_status]}`}>
+                    {log.verification_status.replace('_', ' ')}
+                  </Badge>
+                  <span className="text-[13px] font-mono font-medium text-foreground truncate">{log.batch_id}</span>
+                </div>
+
+                {/* Meta info */}
+                <div className="flex items-center gap-4 text-[12px] text-muted-foreground shrink-0">
+                  {log.latitude && log.longitude && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {log.latitude.toFixed(1)}, {log.longitude.toFixed(1)}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {formatTime(log.scanned_at)}
+                  </span>
+                </div>
+
+                {/* Anomalies */}
+                {anomalies.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-warning shrink-0">
+                    <AlertTriangle className="h-3 w-3" />
+                    <span className="truncate max-w-[200px]">{anomalies[0]}</span>
+                    {anomalies.length > 1 && <span>+{anomalies.length - 1}</span>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </main>
   );
 }
