@@ -86,6 +86,24 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_nonces: {
+        Row: {
+          id: string
+          nonce: string
+          used_at: string
+        }
+        Insert: {
+          id?: string
+          nonce: string
+          used_at?: string
+        }
+        Update: {
+          id?: string
+          nonce?: string
+          used_at?: string
+        }
+        Relationships: []
+      }
       batches: {
         Row: {
           batch_hash: string
@@ -337,6 +355,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_nonces: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

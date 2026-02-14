@@ -22,6 +22,33 @@ serve(async (req) => {
       });
     }
 
+    // Validate wallet address format
+    if (!ethers.isAddress(walletAddress)) {
+      return new Response(JSON.stringify({ error: "Invalid wallet address" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate message format and extract nonce/timestamp
+    const nonceMatch = message.match(/Nonce: ([a-f0-9-]+)/);
+    const timestampMatch = message.match(/Timestamp: (.+)/);
+    if (!nonceMatch || !timestampMatch) {
+      return new Response(JSON.stringify({ error: "Invalid message format" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Reject messages older than 5 minutes
+    const msgTimestamp = new Date(timestampMatch[1]);
+    if (isNaN(msgTimestamp.getTime()) || Date.now() - msgTimestamp.getTime() > 5 * 60 * 1000) {
+      return new Response(JSON.stringify({ error: "Message expired" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Verify the signature
     const recoveredAddress = ethers.verifyMessage(message, signature);
     if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
@@ -34,6 +61,22 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // Check nonce hasn't been used (replay protection)
+    const nonce = nonceMatch[1];
+    const { data: existingNonce } = await supabase.from("auth_nonces").select("nonce").eq("nonce", nonce).maybeSingle();
+    if (existingNonce) {
+      return new Response(JSON.stringify({ error: "Nonce already used" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Store nonce to prevent reuse
+    await supabase.from("auth_nonces").insert({ nonce });
+
+    // Cleanup expired nonces periodically
+    await supabase.rpc("cleanup_expired_nonces");
 
     const email = `${walletAddress.toLowerCase()}@wallet.pharmashield.app`;
     const password = `wallet_${walletAddress.toLowerCase()}_${serviceRoleKey.slice(0, 8)}`;
